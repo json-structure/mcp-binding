@@ -21,4 +21,5 @@ draft-vasters-json-structure-mcp-binding.xml
 Gemfile.lock
 package-lock.json
 report.xml
+tracker.log
 !requirements.txt
