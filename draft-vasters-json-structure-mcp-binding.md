@@ -290,7 +290,7 @@ Under companion carriage the schema slot holds a schema in MCP's default
 dialect, and the JSON Structure schema travels in the `_meta` field of the
 enclosing object under a key defined by this document.
 
-| Slot | `_meta` location | Key |
+| Slot | Metadata location | Key |
 |---|---|---|
 | `Tool.inputSchema` | `Tool._meta` | `org.json-structure/inputSchema` |
 | `Tool.outputSchema` | `Tool._meta` | `org.json-structure/outputSchema` |
