@@ -1,20 +1,36 @@
 # Contributing
 
-This repository relates to activities in the Internet Engineering Task Force
-([IETF](https://www.ietf.org/)). All material in this repository is considered
-Contributions to the IETF Standards Process, as defined in the intellectual
-property policies of IETF currently designated as
-[BCP 78](https://www.rfc-editor.org/info/bcp78),
-[BCP 79](https://www.rfc-editor.org/info/bcp79) and the
-[IETF Trust Legal Provisions (TLP) Relating to IETF Documents](http://trustee.ietf.org/trust-legal-provisions.html).
+This repository contains a pre-submission working draft owned by Microsoft
+Corporation. See [LICENSE.md](LICENSE.md) for the terms that apply to the
+material here.
 
-Any edit, commit, pull request, issue, comment or other change made to this
-repository constitutes Contributions to the IETF Standards Process
-(https://www.ietf.org/).
+Microsoft Corporation intends to submit this document to a standards body,
+expected to be the Internet Engineering Task Force
+([IETF](https://www.ietf.org/)). That submission has not been made yet, so the
+IETF intellectual property policies do not govern this repository today. They
+will govern the document once it is submitted, and this file will be replaced
+at that point.
 
-You agree to comply with all applicable IETF policies and procedures, including,
-BCP 78, 79, the TLP, and the TLP rules regarding code components (e.g. being
-subject to a Simplified BSD License) in Contributions.
+## Terms for contributions
+
+By making any edit, commit, pull request, issue, comment, or other change to
+this repository, you confirm that:
+
+- You have the right to make the contribution and to grant the rights below.
+- You grant Microsoft Corporation a perpetual, worldwide, non-exclusive,
+  royalty-free, irrevocable licence to use, reproduce, modify, publish, and
+  sublicense your contribution, and to submit it to a standards body.
+- You understand that your contribution may be submitted to the IETF or
+  another standards body, and that on submission it becomes subject to that
+  body's intellectual property policies. For the IETF those are
+  [BCP 78](https://www.rfc-editor.org/info/bcp78),
+  [BCP 79](https://www.rfc-editor.org/info/bcp79), the
+  [IETF Trust Legal Provisions](http://trustee.ietf.org/trust-legal-provisions.html),
+  and the TLP rules on code components.
+- You are not entitled to compensation for your contribution.
+
+If you cannot agree to these terms, contact the document editor rather than
+contributing here.
 
 ## How to Contribute
 

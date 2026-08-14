@@ -15,8 +15,11 @@
 /.vscode/
 /lib
 /node_modules/
+node_modules/
+/tmp/
 /versioned/
 archive.json
+dist/
 draft-vasters-json-structure-mcp-binding.xml
 Gemfile.lock
 package-lock.json

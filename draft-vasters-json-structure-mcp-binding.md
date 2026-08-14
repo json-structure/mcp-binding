@@ -3,6 +3,7 @@
 title: "JSON Structure: Model Context Protocol Binding"
 abbrev: "JSON Structure MCP Binding"
 category: std
+ipr: none
 
 docname: draft-vasters-json-structure-mcp-binding-latest
 submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
@@ -29,16 +30,15 @@ author:
 
 normative:
   RFC2119:
-  RFC3986:
   RFC6901:
   RFC8174:
   RFC8259:
   MCP:
-    title: "Model Context Protocol Specification, Version 2025-11-25"
+    title: "Model Context Protocol Specification, Version 2026-07-28"
     author:
     - org: Model Context Protocol Contributors
-    date: 2025
-    target: https://modelcontextprotocol.io/specification/2025-11-25
+    date: 2026
+    target: https://modelcontextprotocol.io/specification/2026-07-28
   JSONRPC:
     title: "JSON-RPC 2.0 Specification"
     author:
@@ -55,153 +55,88 @@ normative:
     author:
       - fullname: Clemens Vasters
     target: https://json-structure.github.io/import/draft-vasters-json-structure-import.html
-  JSTRUCT-UNITS:
-    title: "JSON Structure: Symbols, Scientific Units, and Currencies"
-    author:
-      - fullname: Clemens Vasters
-    target: https://json-structure.github.io/units/draft-vasters-json-structure-units.html
   JSTRUCT-VALIDATION:
     title: "JSON Structure Validation"
     author:
       - fullname: Clemens Vasters
     target: https://json-structure.github.io/validation/draft-vasters-json-structure-validation.html
-  JSTRUCT-COMPOSITION:
-    title: "JSON Structure Conditional Composition"
-    author:
-      - fullname: Clemens Vasters
-    target: https://json-structure.github.io/conditional-composition/draft-vasters-json-structure-cond-composition.html
   JSTRUCT-ALTNAMES:
     title: "JSON Structure Alternate Names"
     author:
       - fullname: Clemens Vasters
     target: https://json-structure.github.io/alternate-names/draft-vasters-json-structure-alternate-names.html
 
-informative:
-  JSTRUCT-SEMANN:
-    title: "JSON Structure Semantic Annotations"
-    author:
-      - fullname: Clemens Vasters
-    target: https://json-structure.github.io/semantic-annotations/draft-vasters-json-structure-sem-ann.html
-  JSTRUCT-RELATIONS:
-    title: "JSON Structure Relations"
-    author:
-      - fullname: Clemens Vasters
-    target: https://json-structure.github.io/relations/draft-vasters-json-structure-relations.html
-  JSON-SCHEMA:
-    title: "JSON Schema: A Media Type for Describing JSON Documents, Draft 2020-12"
-    author:
-    - org: JSON Schema Organization
-    date: 2020
-    target: https://json-schema.org/draft/2020-12/schema
-
 --- abstract
 
 This document defines a binding that allows the schema slots of the Model
 Context Protocol (MCP) {{MCP}} to carry JSON Structure {{JSTRUCT-CORE}}
-schemas. It uses the dialect-selection mechanism MCP already provides: the
-`$schema` keyword on a tool's `inputSchema` and `outputSchema` and on an
-elicitation `requestedSchema`. For deployments that must also serve clients
-that do not implement this binding, it defines a companion carriage in MCP's
-`_meta` field. The binding is strictly additive and opt-in per schema slot.
-It introduces no new MCP methods, capabilities, or message types, and it does
-not modify, fork, or republish the Model Context Protocol.
+schemas. It defines an MCP extension through which a client advertises that it
+understands the dialect, selects the dialect with the `$schema` keyword MCP
+already provides, and requires a server to fall back to JSON Schema for clients
+that do not implement the extension. The binding is opt-in per schema slot and
+introduces no new MCP methods or message types.
+
+--- note_Copyright_Notice
+
+Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+
+This is a pre-submission working draft, published for public review and
+comment. It is not a standard, it does not represent a commitment by Microsoft
+Corporation, and its content may change or be withdrawn at any time.
+
+Permission is granted to read, reproduce, and redistribute this document in
+unmodified form, in whole or in part, for the purpose of review and comment,
+provided that this notice is retained. No other rights are granted, whether by
+implication, estoppel, or otherwise, and no licence to any patent, trademark,
+or other intellectual property right is granted by this document.
+
+Microsoft Corporation intends to submit this document to a standards body. On
+submission, the contribution and intellectual property policies of that body
+govern this document and supersede this notice.
+
+This document is provided "as is", without warranty of any kind.
 
 --- middle
 
 # Introduction {#introduction}
 
 The Model Context Protocol {{MCP}} lets a server describe the tools it offers
-to a language model. Each tool carries an `inputSchema` describing its
-arguments, optionally an `outputSchema` describing the structured result, and
-a server may ask the user for information with an elicitation
-`requestedSchema`. All three are schema documents that travel inside a
-JSON-RPC {{JSONRPC}} message.
+to a language model. A tool carries an `inputSchema` for its arguments and
+optionally an `outputSchema` for its structured result, and a server may ask
+the user for information with a form-mode elicitation `requestedSchema`. All
+three are schema documents that travel inside a JSON-RPC {{JSONRPC}} message.
 
-MCP's own definition of these slots is deliberately thin. The wire type
-constrains the root to `"type": "object"` with `properties` and `required`,
-and leaves everything below the first level unconstrained. Protocol version
-2025-11-25 added an optional `$schema` keyword to each slot and states that
-the value defaults to JSON Schema 2020-12 {{JSON-SCHEMA}} when no explicit
-`$schema` is given. That keyword is the seam this document uses, and it uses
-nothing else.
+MCP's definition of these slots is thin. The wire type constrains the root to
+`"type": "object"` with `properties` and `required` and leaves everything
+below the first level unconstrained. MCP's
+[JSON Schema usage rules](https://modelcontextprotocol.io/specification/2026-07-28/basic/index#json-schema-usage)
+permit a schema to name its dialect in `$schema` and default to JSON Schema
+2020-12 when it is absent. This document uses that keyword and no other
+extension point.
 
-The result is a strictly additive, opt-in binding:
-
-* Adoption is per schema slot. One tool, several tools, or every tool on a
-  server can use JSON Structure. The rest of the server is unaffected.
-* No new MCP fields, methods, capabilities, or notifications are introduced.
-  A JSON Structure schema appears in the slot where a schema is already
-  expected.
-* JSON Structure's precise type system, identifier-safe naming with wire-name
-  aliases, unit and currency annotations, semantic annotations, and relation
-  declarations become available to describe what a tool actually consumes and
-  produces.
-
-The motivation for doing this, and what a model and a client gain from the
-annotation model in particular, is set out in a companion document, "Why JSON
-Structure for MCP?", published alongside this specification. This document is
-confined to the mechanics.
-
-MCP {{MCP}} remains authoritative for everything this document does not
-modify.
+Adoption is per schema slot, and a server MAY bind one slot while leaving
+another in the default dialect. The binding is an MCP extension
+({{negotiation}}), so a client that does not implement it never receives a JSON
+Structure schema and needs no changes. This document governs the three schema
+slots and `structuredContent` and nothing else in MCP, which remains
+authoritative for everything not modified here.
 
 # Conventions and Terminology {#conventions-and-terminology}
 
 {::boilerplate bcp14-tagged}
 
-This document uses the following terms:
-
 Schema slot:
 : A location in an MCP message whose value is a schema document. This
-  document binds three of them: `Tool.inputSchema`, `Tool.outputSchema`, and
-  the `requestedSchema` member of the parameters of an `elicitation/create`
-  request in form mode {{MCP}}.
-
-Dialect, meta-schema:
-: The URI, carried in `$schema`, that identifies the language and version a
-  schema document is written in.
+  document binds three: `Tool.inputSchema`, `Tool.outputSchema`, and the
+  `requestedSchema` of a form-mode `elicitation/create` request {{MCP}}.
 
 Bound slot:
-: A schema slot whose content is a JSON Structure schema under this binding,
-  by either of the two carriage profiles in {{carriage}}.
+: A schema slot whose value is a JSON Structure schema under this binding.
 
-Argument object:
-: The value of `params.arguments` in a `tools/call` request {{MCP}}.
-
-Structured result:
-: The value of `structuredContent` in a `CallToolResult` {{MCP}}.
-
-Terms defined by JSON Structure Core {{JSTRUCT-CORE}}, such as schema
-document, type, namespace, and add-in, are used as defined there. Terms
-defined by MCP {{MCP}}, such as tool, client, server, host, elicitation, and
-sampling, are used as defined there.
-
-# Scope and Relationship to MCP {#scope}
-
-This document does not change MCP. It defines how an existing MCP schema slot
-is recognized as carrying JSON Structure, how its content is constrained, and
-what a client and a server are obliged to do with it.
-
-The following are explicitly out of scope:
-
-* Changes to any MCP method, capability, notification, or transport.
-* Changes to `CallToolResult.content`, the unstructured content list. This
-  binding governs `structuredContent` only.
-* Negotiation. A client does not announce support for this binding through an
-  MCP capability, and a server does not ask for it. {{carriage}} defines a
-  carriage profile that keeps unaware clients working without negotiation.
-* The `ToolAnnotations` object and the `Icon` object. Those are MCP
-  constructs and are unaffected.
-* Any registry of semantic vocabularies, unit symbols, or concept
-  identifiers. Those belong to the JSON Structure companion specifications.
-
-A server MAY use this binding for some tools and MCP's default dialect for
-others in the same `tools/list` result. A server MAY bind `inputSchema` and
-leave `outputSchema` in the default dialect, or the reverse.
-
-Tools offered to a client for use during sampling, in the `tools` member of
-`sampling/createMessage` parameters {{MCP}}, are `Tool` objects and are bound
-by this document on the same terms as tools offered through `tools/list`.
+Terms defined by JSON Structure Core {{JSTRUCT-CORE}} and by MCP {{MCP}} are
+used as defined there. Argument object and structured result mean the values
+of `params.arguments` in a `tools/call` request and of `structuredContent` in
+a `CallToolResult`.
 
 # Dialect Selection {#dialect-selection}
 
@@ -215,578 +150,204 @@ A schema slot is a JSON Structure schema under this binding when its
 | `https://json-structure.org/meta/core/v0/#` | Core {{JSTRUCT-CORE}} only. No add-ins. |
 | `https://json-structure.org/meta/extended/v0/#` | Core plus the add-ins that meta-schema offers, each of which must be activated with `$uses`. |
 | `https://json-structure.org/meta/validation/v0/#` | Core with all offered add-ins activated by default. |
-| `https://json-structure.org/meta/semantic-annotations/v0/#` | Core plus the semantic annotation add-in {{JSTRUCT-SEMANN}}, which must be activated with `$uses`. |
+| `https://json-structure.org/meta/semantic-annotations/v0/#` | Core plus the semantic annotation add-in, which must be activated with `$uses`. |
 
-The list is not closed. A future JSON Structure meta-schema URI, or a private
-meta-schema that itself references one of the above, is recognized under this
-binding if the processor knows it. A processor that does not know a `$schema`
-value MUST apply {{unknown-dialects}}.
+The list is not closed: a future JSON Structure meta-schema URI, or a private
+meta-schema that itself references one of the above, is recognized if the
+processor knows it. A processor that does not know a `$schema` value MUST
+apply {{unknown-dialects}}.
 
-A bound slot MUST carry `$schema` explicitly. A server MUST NOT emit a JSON
-Structure schema in a slot with `$schema` absent. MCP defines an absent
-`$schema` to mean JSON Schema 2020-12, and a JSON Structure schema read as
-JSON Schema is not merely imprecise, it is wrong: `$ref` sits in a different
-position, `map`, `set`, `tuple`, `choice`, and `any` are unknown types, and
-`int64` and `decimal` values are strings rather than numbers.
+A bound slot MUST carry `$schema` explicitly, and a server MUST NOT emit a
+JSON Structure schema in a slot with `$schema` absent. MCP defines an absent
+`$schema` to mean JSON Schema 2020-12, and a processor that reads a JSON
+Structure schema as JSON Schema will misinterpret it.
 
-## Unknown and Mismatched Dialects {#unknown-dialects}
+## Unrecognized Dialects {#unknown-dialects}
 
-A client that encounters a `$schema` value it does not implement MUST NOT
-process the schema under any other dialect, and in particular MUST NOT
-process it as JSON Schema. The client MUST take one of the following
-actions:
+A recognized `$schema` value is one the processor implements. Anything else is
+governed by MCP's rule for
+[unsupported dialects](https://modelcontextprotocol.io/specification/2026-07-28/basic/index#implementation-requirements),
+and a client MUST NOT fall back to reading the document as JSON Schema. See
+{{security-considerations}}.
 
-* Treat the tool as having an undescribed argument object and an undescribed
-  result, and offer it to the model only if the host permits tools with
-  undescribed arguments; or
-* Omit the tool from the set presented to the model.
+# Extension Negotiation {#negotiation}
 
-Silent reinterpretation is prohibited because the keyword spellings `type`,
-`properties`, `required`, `description`, and `$ref` are shared across
-dialects with differing semantics. A schema misread as another dialect
-produces validation outcomes that differ without any error being raised.
+This binding is an MCP
+[extension](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning#extension-negotiation)
+with the identifier `org.json-structure/schema-binding`. A client that
+implements it MUST advertise that identifier in the `extensions` map of its
+client capabilities, and a server that implements it MUST advertise the same
+identifier in the `extensions` map of its server capabilities. Its settings
+object is empty in this revision, and a party MUST ignore members of it that it
+does not recognize.
 
-A server MUST NOT rely on a client rejecting a schema safely. A server that
-needs to remain useful to clients that do not implement this binding MUST use
-the companion carriage profile in {{companion-carriage}}.
-
-# Carriage Profiles {#carriage}
-
-This binding defines two ways for a JSON Structure schema to reach a client.
-A server MUST use exactly one of them per schema slot.
-
-## Native Carriage {#native-carriage}
-
-Under native carriage the JSON Structure schema document is the value of the
-schema slot itself, and its root `$schema` member selects the dialect per
-{{meta-schema-uris}}.
+A server MUST NOT place a JSON Structure schema in a schema slot for a client
+that has not advertised the identifier. Where the client has, the schema slot
+holds the JSON Structure schema document itself, and its `$schema` member
+selects the dialect per {{meta-schema-uris}}.
 
 ~~~ json
-{
-  "name": "convert_temperature",
-  "title": "Convert Temperature",
-  "inputSchema": {
-    "$schema": "https://json-structure.org/meta/extended/v0/#",
-    "$id": "https://tools.example.com/schemas/convert-temperature-input",
-    "$uses": ["JSONStructureUnits", "JSONStructureValidation"],
-    "name": "ConvertTemperatureInput",
-    "type": "object",
-    "properties": {
-      "reading": { "type": "double", "unit": "Cel", "minimum": -273.15 },
-      "target": { "type": "string", "enum": ["Cel", "K", "[degF]"] }
-    },
-    "required": ["reading", "target"]
-  }
+"inputSchema": {
+  "$schema": "https://json-structure.org/meta/extended/v0/#",
+  "$id": "https://tools.example.com/schemas/convert-temp-input",
+  "$uses": ["JSONStructureValidation"],
+  "name": "ConvertTemperatureInput",
+  "type": "object",
+  "properties": { "celsius": { "type": "double", "minimum": -273.15 } },
+  "required": ["celsius"]
 }
 ~~~
 
-Native carriage requires the client to implement this binding. It is the
-higher-fidelity profile and the one a server SHOULD prefer when it knows its
-clients.
+## Fallback {#fallback}
 
-## Companion Carriage {#companion-carriage}
+A server MUST remain usable by a client that has not advertised the identifier.
+For such a client it MUST place in the schema slot a JSON Schema 2020-12
+projection of the JSON Structure schema that governs the slot.
 
-Under companion carriage the schema slot holds a schema in MCP's default
-dialect, and the JSON Structure schema travels in the `_meta` field of the
-enclosing object under a key defined by this document.
-
-| Slot | Metadata location | Key |
-|---|---|---|
-| `Tool.inputSchema` | `Tool._meta` | `org.json-structure/inputSchema` |
-| `Tool.outputSchema` | `Tool._meta` | `org.json-structure/outputSchema` |
-| `requestedSchema` | `params._meta` of the `elicitation/create` request | `org.json-structure/requestedSchema` |
-
-The value under such a key MUST be a complete JSON Structure schema document
-carrying its own `$schema` per {{meta-schema-uris}} and satisfying every
-requirement of {{schema-requirements}}.
-
-The two schemas describe the same argument object or structured result. The
-JSON Structure schema is authoritative. A server MUST ensure that every
-instance the JSON Structure schema accepts is also accepted by the schema in
-the slot. The converse is not required, and generally will not hold: the slot
-schema is expected to be the looser of the two, because MCP's default dialect
-cannot express everything JSON Structure can.
-
-A client that implements this binding SHOULD use the JSON Structure schema
-and ignore the slot schema. A client that does not implement this binding
-sees a slot schema in the dialect it already understands, and MCP's own
-`_meta` rules require it to ignore keys it does not recognize.
-
-When a slot carries a recognized JSON Structure `$schema` per
-{{meta-schema-uris}}, the corresponding `_meta` key MUST NOT also be present.
+The projection MUST accept every instance the JSON Structure schema accepts. It
+will ordinarily accept more, because Core draws distinctions JSON Schema cannot
+express. The JSON Structure schema remains authoritative: a server validates
+per {{validation}} against it and not against the projection, so a client that
+checks an argument object against the projection MAY find the server rejects
+what the projection allowed. This document does not define the mapping.
 
 # Schema Requirements {#schema-requirements}
 
 A JSON Structure schema in a bound slot MUST be a valid schema document per
 JSON Structure Core {{JSTRUCT-CORE}} and the add-ins it activates, subject to
-the additional requirements in this section.
+the requirements in this section.
 
 ## Root Form {#root-form}
 
-The root of the schema document MUST declare `"type": "object"` inline. This
-satisfies MCP's requirement that a schema slot be an object type at the root.
-
-Consequently:
-
-* `$root` MUST NOT be present. Core makes `$root` and `type` mutually
-  exclusive, and MCP requires `type`.
-* The root MUST carry `name`, as Core requires for every `object` type. The
-  value MUST match Core's identifier production. A server SHOULD derive it
-  from the tool name, transformed as needed to satisfy that production.
-* `$id` MUST be present, as Core requires. Its value MUST be an absolute URI
-  {{RFC3986}} in a namespace the server controls. It identifies the schema;
-  it is not a retrieval address, and a client MUST NOT dereference it. See
-  {{security-considerations}}.
-* `definitions` MAY be present and carries any types the root references.
-* `$uses` MAY be present at the root, which is the only place it appears. See
-  {{extension-activation}}.
+The root of a bound `inputSchema` or `requestedSchema` MUST declare
+`"type": "object"` inline, and `$root` MUST NOT be present, since Core makes
+the two mutually exclusive. MCP requires those
+[slots](https://modelcontextprotocol.io/specification/2026-07-28/server/tools#tool)
+to carry `"type": "object"` at the root; that is MCP's wire type rather than a
+property of Core, whose `choice` and `map` types also produce JSON objects and
+would otherwise qualify. The root of a bound `outputSchema` MAY declare any
+Core type inline, or MAY designate one through `$root`, since MCP constrains
+neither the keyword nor the type there. The `name` Core requires on the root
+SHOULD be derived from the tool name, transformed as needed to satisfy Core's
+identifier production. The `$id` Core requires MUST be in a namespace the
+server controls; it identifies the schema, is not a retrieval address, and a
+client MUST NOT dereference it. See {{security-considerations}}.
 
 ## Zero-Argument Tools {#zero-argument-tools}
 
-MCP requires the object form even for a tool that takes no arguments. JSON
-Structure Core requires an `object` type to declare at least one property.
-
-For the root of a bound `inputSchema` only, and only when the tool takes no
-arguments, this binding relaxes that requirement: `properties` MAY be an
-empty object. When it is, `additionalProperties` MUST be present with the
-value `false`, and `required` MUST be absent or empty.
-
-~~~ json
-{
-  "$schema": "https://json-structure.org/meta/core/v0/#",
-  "$id": "https://tools.example.com/schemas/ping-input",
-  "name": "PingInput",
-  "type": "object",
-  "properties": {},
-  "additionalProperties": false
-}
-~~~
-
-This relaxation does not extend to `outputSchema`, to `requestedSchema`, to
-nested types, or to types in `definitions`. A tool that produces no
-structured result omits `outputSchema` rather than declaring an empty one.
+MCP describes a tool that takes no arguments with an object schema carrying
+`"additionalProperties": false` and no properties, while Core requires an
+`object` type to declare at least one property. A bound `inputSchema` for such
+a tool MUST declare `"additionalProperties": false` and exactly one property,
+named `null` and of type `null`, which MUST NOT appear in `required`. An empty
+`arguments` object then satisfies both specifications, and the property carries
+no argument value. This convention applies to a bound `inputSchema` only; no
+schema in another slot may use it to stand in for an empty property set.
 
 ## Self-Containment {#self-containment}
 
-A schema in a bound slot MUST be self-contained. Specifically:
+A schema in a bound slot MUST be self-contained. The Import add-in
+{{JSTRUCT-IMPORT}} is not permitted: a schema MUST NOT name
+`JSONStructureImport` in `$uses`, and `$import` and `$importdefs` MUST NOT
+appear even where the selected meta-schema activates the add-in by default. A
+server composing schemas from imported libraries MUST resolve those imports,
+as {{JSTRUCT-IMPORT}} defines that operation, before transmission.
 
-* `$import` and `$importdefs` {{JSTRUCT-IMPORT}} MUST NOT appear. A server
-  that composes its schemas from imported libraries MUST resolve those
-  imports before transmission, merging the imported definitions into
-  `definitions` under the designated namespace and rewriting JSON Pointers
-  within the imported definitions as the Import specification requires.
-* Every `$ref` MUST resolve within the same schema document, as Core already
-  requires.
-* No other member may carry a URI that a processor is expected to retrieve in
-  order to interpret the schema.
-
-The only URI in a bound slot that identifies something outside the document
-is `$schema`, and it is matched against the table in {{meta-schema-uris}}
-rather than fetched.
-
-The reason is the setting. A schema slot travels inside a single JSON-RPC
-message that a client processes while listing tools, often before any trust
-decision about the server has been made. A schema that is only interpretable
-after a network fetch turns tool discovery into a request-forgery surface.
+No member may carry a URI that a processor is expected to retrieve in order
+to interpret the schema. MCP already
+[forbids automatic dereferencing](https://modelcontextprotocol.io/specification/2026-07-28/basic/index#ref-resolution)
+of a `$ref` that resolves to a network URI; this binding admits no external
+reference at all. The only outward-pointing URI in a bound slot is `$schema`,
+matched against {{meta-schema-uris}} rather than fetched. See
+{{security-considerations}}.
 
 ## Extension Activation {#extension-activation}
 
-Add-in keywords are inert unless activated. A schema document activates
-add-ins with `$uses` at its root, naming add-ins offered by the meta-schema
-its `$schema` selects, except where the meta-schema activates them by
-default.
-
-The following identifiers are defined by the JSON Structure meta-schemas at
-the time of writing:
-
-* `JSONStructureAlternateNames` {{JSTRUCT-ALTNAMES}}
-* `JSONStructureUnits` {{JSTRUCT-UNITS}}
-* `JSONStructureImport` {{JSTRUCT-IMPORT}}, which {{self-containment}}
-  prohibits in a bound slot
-* `JSONStructureConditionalComposition` {{JSTRUCT-COMPOSITION}}
-* `JSONStructureValidation` {{JSTRUCT-VALIDATION}}
-* `JSONStructureSemanticAnnotations` {{JSTRUCT-SEMANN}}, offered by the
-  semantic annotations meta-schema
-
-If a schema in a bound slot uses a keyword defined by one of these add-ins,
-it MUST activate that add-in, either by naming it in `$uses` or by selecting
-a meta-schema that activates it by default. A server MUST NOT emit a bound
-slot containing an unactivated add-in keyword.
-
-This requirement exists because the failure is silent. An unactivated add-in
-keyword is ignored rather than rejected. A schema that carries `minimum` and
-`maxLength` without activating `JSONStructureValidation` describes
-constraints that no validator will enforce, and it does so while looking
-entirely reasonable to a reader.
-
-A client that finds an unactivated add-in keyword MUST treat the instance as
-unconstrained by that keyword. It SHOULD report the condition through
-whatever diagnostic channel it has, and it MAY treat the schema as
-malformed.
-
-Relation keywords {{JSTRUCT-RELATIONS}}, namely `identity`, `relations`,
-`targettype`, `cardinality`, `scope`, and `qualifiertype`, have no add-in
-identifier defined at the time of writing. They are carried in a bound slot
-as unknown keywords, which Core permits, and a processor that does not
-understand them MUST preserve and ignore them.
+If a schema in a bound slot uses a keyword defined by an add-in, it MUST
+activate that add-in, by naming it in `$uses` or by selecting a meta-schema
+that activates it by default. A server MUST NOT emit a bound slot containing
+an unactivated add-in keyword. A client that finds one MUST treat the
+instance as unconstrained by that keyword, SHOULD report the condition, and
+MAY treat the schema as malformed.
 
 # Names on the Wire {#wire-names}
 
-JSON Structure requires property names to match the identifier production
-`[A-Za-z_][A-Za-z0-9_]*`. MCP places no such restriction on argument keys or
-on members of a structured result. The Alternate Names add-in
-{{JSTRUCT-ALTNAMES}} bridges the two with the reserved `json` purpose
-indicator of `altnames`.
-
-The key that identifies a property on the wire, in the argument object of a
-`tools/call` request and in a structured result, is:
-
-1. the value of that property's `altnames` member under the key `json`, if
-   present; otherwise
-2. the property name itself.
+MCP places no restriction on the keys of an argument object or a structured
+result, while Core constrains property names to its identifier production.
+The reserved `json` purpose indicator of `altnames` {{JSTRUCT-ALTNAMES}}
+reconciles the two: the key that identifies a property on the wire is the
+value of that property's `altnames` member under the key `json` if present,
+and the property name itself otherwise. A property named `maxResults` carrying
+`"altnames": { "json": "max-results" }` therefore appears in an argument
+object as `{"max-results": 20}`.
 
 A schema that uses `altnames` for this purpose MUST activate
-`JSONStructureAlternateNames` per {{extension-activation}}.
-
-~~~ json
-{
-  "name": "SearchInput",
-  "type": "object",
-  "properties": {
-    "maxResults": {
-      "type": "int32",
-      "altnames": { "json": "max-results", "lang:en": "Maximum results" }
-    }
-  }
-}
-~~~
-
-An instance of that type appears on the wire as `{"max-results": 20}`. Two
-properties of the same type MUST NOT resolve to the same wire name.
-
-Purpose indicators other than `json`, the `lang:` family in particular, do
-not affect the wire form. They are display names, and {{annotations}}
-describes what a client may do with them.
+`JSONStructureAlternateNames` per {{extension-activation}}. Two properties of
+the same type MUST NOT resolve to the same wire name. Purpose indicators
+other than `json` do not affect the wire form.
 
 # Value Representation {#value-representation}
 
-An argument object and a structured result are JSON {{RFC8259}} values, and
-JSON Structure Core fixes how each of its types is represented in JSON.
-Nothing in this binding changes that, but two consequences are worth stating
-because they differ from what a JSON Schema-shaped intuition expects.
-
-Numeric types whose range exceeds what IEEE 754 double precision represents
-exactly, namely `int64`, `uint64`, `int128`, `uint128`, and `decimal`, are
-represented as JSON strings. A `tools/call` request carrying an `int64`
-argument sends `{"count": "9007199254740993"}`, not a JSON number. Servers
-and clients MUST use the string form, MUST NOT coerce it to a JSON number,
-and MUST NOT parse it into a binary floating-point value on the way through.
-
-Values of the Core types `binary`, `date`, `datetime`, `time`, `duration`,
-`uuid`, `uri`, and `jsonpointer` are represented as JSON strings in the forms
-Core prescribes.
-
-A server MUST reject an argument object that presents a value in the wrong
-representation. A lenient server that accepts `9007199254740993` as a JSON
-number for an `int64` property teaches the model a shape that the next
-implementation will reject.
+An argument object and a structured result are JSON {{RFC8259}} values whose
+representation is fixed by JSON Structure Core {{JSTRUCT-CORE}}. This binding
+changes nothing about it and permits no leniency. Core represents the numeric
+types that exceed exact IEEE 754 double precision as JSON strings, so a
+`tools/call` request carrying an `int64` argument sends
+`{"count": "9007199254740993"}`, not a JSON number. Servers and clients MUST
+NOT coerce such a value to a JSON number, and MUST NOT parse it into a binary
+floating-point value in transit, which would reintroduce the silent-rounding
+failure the type system exists to prevent.
 
 # Validation {#validation}
 
-## Server Obligations {#server-validation}
-
 A server MUST validate the argument object of a `tools/call` request against
-the bound `inputSchema` before executing the tool. Validation is performed
-per JSON Structure Core {{JSTRUCT-CORE}} together with the add-ins the schema
-activates.
+the bound `inputSchema`, per JSON Structure Core {{JSTRUCT-CORE}} and the
+add-ins the schema activates, before executing the tool. If validation fails
+the server MUST NOT execute the tool. MCP classifies input validation failure
+as a [tool execution error](https://modelcontextprotocol.io/specification/2026-07-28/server/tools#error-handling),
+so the server SHOULD report it as a `CallToolResult` with `isError` set to
+`true` and a diagnostic in `content`, which lets the model correct itself. A
+server MAY instead return a JSON-RPC error {{JSONRPC}} with code `-32602`
+where the request is malformed rather than merely invalid. A diagnostic
+SHOULD identify each failing location with a JSON Pointer {{RFC6901}} into
+the argument object and name the keyword that failed.
 
-If validation fails the server MUST NOT execute the tool, and it MUST report
-the failure in one of two ways:
-
-* as a JSON-RPC error {{JSONRPC}} with code `-32602`, which is what MCP
-  prescribes for invalid arguments; or
-* as a `CallToolResult` with `isError` set to `true` and a diagnostic in
-  `content`, when the server judges that the model should see the failure and
-  correct itself.
-
-A diagnostic SHOULD identify each failing location with a JSON Pointer
-{{RFC6901}} into the argument object, and SHOULD name the keyword that
-failed.
-
-When a bound `outputSchema` is present, MCP already requires the server to
-produce a `structuredContent` value that conforms to it. Under this binding,
-conformance means validity per JSON Structure Core and the activated add-ins.
-A server MUST NOT return a structured result that does not validate; it
-returns an error result instead.
-
-MCP recommends that a tool returning structured content also serialize it
-into a text content block for clients that predate `structuredContent`. When
-a server does so, the text block MUST contain the JSON serialization
-{{RFC8259}} of the same value that appears in `structuredContent`.
-
-## Client Obligations {#client-validation}
+Where a bound `outputSchema` is present, MCP already requires the server to
+produce a [conforming value](https://modelcontextprotocol.io/specification/2026-07-28/server/tools#output-schema)
+in `structuredContent`;
+under this binding that means validity per Core and the activated add-ins. A
+server MUST NOT return a structured result that does not validate, and
+returns an error result instead. Where a server also mirrors the structured
+result into a text content block, as MCP recommends for clients that predate
+`structuredContent`, that block MUST contain the JSON serialization
+{{RFC8259}} of the same value.
 
 A client that implements this binding SHOULD validate a structured result
-against the bound `outputSchema` before presenting it to the model.
-
-A client MUST NOT present a non-conforming structured result to the model as
-though it conformed. It MAY present the result with the discrepancy
-described, and it MAY discard the structured result and fall back to the
-unstructured `content` list.
-
-A client MAY validate an argument object against the bound `inputSchema`
-before sending it. Doing so catches model errors a turn earlier and is
-RECOMMENDED where the cost is acceptable. It does not relieve the server of
-{{server-validation}}.
+against the bound `outputSchema` before presenting it to the model, and MUST
+NOT present a non-conforming result as though it conformed; it MAY describe
+the discrepancy, or fall back to the unstructured `content` list. A client MAY
+validate an argument object before sending it, which does not relieve the
+server of its obligation.
 
 # Elicitation {#elicitation}
 
-MCP's `requestedSchema` for form-mode elicitation is a deliberately narrow
-profile: top-level properties only, no nesting, and a restricted set of
-primitive shapes. That narrowness is a client rendering concern, not an
-expressiveness preference, and this binding preserves it.
+MCP restricts `requestedSchema` for
+[form-mode elicitation](https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation#requested-schema)
+to a narrow profile of top-level primitives, and this binding preserves it. A
+bound `requestedSchema` MUST satisfy {{schema-requirements}} and, in
+addition:
 
-A bound `requestedSchema` MUST satisfy {{schema-requirements}} and the
-following additional constraints:
+* The root MUST declare at least one property, and the convention of
+  {{zero-argument-tools}} MUST NOT be used.
+* `definitions` MUST NOT be present and `$ref` MUST NOT be used.
+* Each property MUST declare as its `type` one of `string`, `boolean`,
+  `number`, `integer`, `int8`, `uint8`, `int16`, `uint16`, `int32`, `uint32`,
+  `float`, `double`, `date`, `datetime`, or `uri`; or `enum` alongside
+  `string` for single selection; or `array` or `set` over an
+  `enum`-constrained `string` for multiple selection. No other compound type.
 
-* The root MUST declare at least one property. {{zero-argument-tools}} does
-  not apply.
-* `definitions` MUST NOT be present, and `$ref` MUST NOT be used.
-* Every property MUST declare one of the following as its `type`: `string`,
-  `boolean`, `number`, `integer`, `int8`, `uint8`, `int16`, `uint16`,
-  `int32`, `uint32`, `float`, `double`, `date`, `datetime`, or `uri`.
-* A property MAY declare `enum` alongside a `string` type, giving a
-  single-selection field.
-* A property MAY declare `type` as `array` or `set` whose `items` is an
-  `enum`-constrained `string`, giving a multiple-selection field. This is the
-  only compound type permitted.
-* No other compound type, meaning `object`, `map`, `tuple`, or `choice`, may
-  appear.
-
-A client renders the form from the schema. The following mappings are
-RECOMMENDED:
-
-* `description`, or a `descriptions` entry matching the user's language, is
-  the field's help text.
-* An `altnames` entry with a `lang:` purpose indicator matching the user's
-  language is the field's label. Otherwise the property name is the label.
-* `altenums` entries under a matching `lang:` indicator are the display
-  labels of the selectable values.
-* `unit`, `currency`, or `symbol` {{JSTRUCT-UNITS}} is displayed adjacent to
-  the input.
-* Validation keywords {{JSTRUCT-VALIDATION}} constrain the input in the form.
-
-The value the client returns in `ElicitResult.content` MUST use the wire
-names defined in {{wire-names}} and the representations required by
-{{value-representation}}.
-
-# Annotations and Client Behavior {#annotations}
-
-Everything in this section is advisory. A client MAY ignore all of it and
-still conform.
-
-A bound schema may carry annotations that describe the data beyond its shape.
-A client that implements this binding is in a position to use them, in two
-distinct ways, and the distinction matters.
-
-## Surfacing to the User {#annotations-user}
-
-A client MAY use `altnames` with `lang:` indicators, `descriptions`,
-`altenums`, `symbol`, `symbols`, `unit`, `currency`, and `examples` to render
-argument forms, confirmation prompts, and result displays. This is
-presentation, and it is the low-risk use.
-
-## Surfacing to the Model {#annotations-model}
-
-A client MAY incorporate schema annotations into the material it places in
-the model's context: the tool description, a rendering of the argument
-schema, or a rendering of the result schema.
-
-Annotations that carry machine-checkable identity are the useful ones here.
-`unit` and `ucumUnit` state the physical unit of a quantity, `currency`
-states the currency of a monetary amount, `concepts` and the other semantic
-annotation keywords {{JSTRUCT-SEMANN}} bind a value to an external
-vocabulary, and the relation keywords {{JSTRUCT-RELATIONS}} state which
-member of a result is an identity that another tool accepts as an argument. A
-model that is told a value is in `Cel` and a model that is told a value is a
-`double` are not equally equipped.
-
-Annotations that carry free text are a different matter. `description`,
-`descriptions`, and the `lang:` entries of `altnames` are natural language
-authored by the server operator, and placing them in the model's context is
-placing server-controlled text in the model's context. A client MUST treat
-them with the same suspicion MCP already requires for `description` and
-`ToolAnnotations`. See {{security-considerations}}.
-
-A client MUST NOT make a tool-invocation or permission decision on the basis
-of any schema annotation received from a server that the host does not trust.
-Annotations describe data. They are not assertions about behavior, and a
-server that wishes to lie in them is free to.
-
-# Examples {#examples}
-
-## A Tool with Units and an Identity {#example-tool}
-
-A tool that reads a tide gauge. The input takes a station identifier; the
-output carries a measured water level with its unit, a timestamp, and a
-station reference that declares its own identity.
-
-~~~ json
-{
-  "name": "read_tide_gauge",
-  "title": "Read Tide Gauge",
-  "description": "Return the most recent water level from a tide gauge.",
-  "inputSchema": {
-    "$schema": "https://json-structure.org/meta/extended/v0/#",
-    "$id": "https://tides.example.com/schemas/read-gauge-input",
-    "$uses": ["JSONStructureAlternateNames", "JSONStructureValidation"],
-    "name": "ReadTideGaugeInput",
-    "type": "object",
-    "properties": {
-      "stationId": {
-        "type": "string",
-        "description": "Identifier of the tide gauge station.",
-        "altnames": { "json": "station-id", "lang:en": "Station" },
-        "pattern": "^[0-9]{7}$"
-      }
-    },
-    "required": ["stationId"]
-  },
-  "outputSchema": {
-    "$schema": "https://json-structure.org/meta/extended/v0/#",
-    "$id": "https://tides.example.com/schemas/read-gauge-output",
-    "$uses": ["JSONStructureAlternateNames", "JSONStructureUnits"],
-    "name": "ReadTideGaugeOutput",
-    "type": "object",
-    "properties": {
-      "waterLevel": {
-        "type": "double",
-        "description": "Water surface height above chart datum.",
-        "unit": "m",
-        "ucumUnit": "m",
-        "altnames": { "json": "water-level" }
-      },
-      "observedAt": {
-        "type": "datetime",
-        "altnames": { "json": "observed-at" }
-      },
-      "station": {
-        "type": { "$ref": "#/definitions/StationRef" }
-      }
-    },
-    "required": ["waterLevel", "observedAt", "station"],
-    "definitions": {
-      "StationRef": {
-        "name": "StationRef",
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" }
-        },
-        "required": ["id", "name"],
-        "identity": ["id"]
-      }
-    }
-  }
-}
-~~~
-
-A conforming `tools/call` request and result:
-
-~~~ json
-{
-  "jsonrpc": "2.0", "id": 7, "method": "tools/call",
-  "params": {
-    "name": "read_tide_gauge",
-    "arguments": { "station-id": "9414290" }
-  }
-}
-~~~
-
-~~~ json
-{
-  "jsonrpc": "2.0", "id": 7,
-  "result": {
-    "content": [
-      { "type": "text",
-        "text": "{\"water-level\":2.41,\"observed-at\":\"2026-08-13T09:00:00Z\",\"station\":{\"id\":\"9414290\",\"name\":\"San Francisco\"}}" }
-    ],
-    "structuredContent": {
-      "water-level": 2.41,
-      "observed-at": "2026-08-13T09:00:00Z",
-      "station": { "id": "9414290", "name": "San Francisco" }
-    }
-  }
-}
-~~~
-
-## Companion Carriage {#example-companion}
-
-The same input schema, served to a mixed client population. The slot holds a
-JSON Schema; `_meta` holds the authority.
-
-~~~ json
-{
-  "name": "read_tide_gauge",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "station-id": { "type": "string", "pattern": "^[0-9]{7}$" }
-    },
-    "required": ["station-id"]
-  },
-  "_meta": {
-    "org.json-structure/inputSchema": {
-      "$schema": "https://json-structure.org/meta/extended/v0/#",
-      "$id": "https://tides.example.com/schemas/read-gauge-input",
-      "$uses": ["JSONStructureAlternateNames", "JSONStructureValidation"],
-      "name": "ReadTideGaugeInput",
-      "type": "object",
-      "properties": {
-        "stationId": {
-          "type": "string",
-          "altnames": { "json": "station-id" },
-          "pattern": "^[0-9]{7}$"
-        }
-      },
-      "required": ["stationId"]
-    }
-  }
-}
-~~~
-
-Note that the slot schema uses the wire name, because that is what an unaware
-client will send.
-
-# Conformance {#conformance}
-
-A conforming server under this binding:
-
-* emits, in every bound slot, a schema document that satisfies
-  {{schema-requirements}};
-* uses exactly one carriage profile per slot, per {{carriage}};
-* activates every add-in whose keywords it uses, per
-  {{extension-activation}};
-* emits and accepts wire names per {{wire-names}} and value representations
-  per {{value-representation}};
-* validates every argument object before execution and every structured
-  result before transmission, per {{server-validation}}.
-
-A conforming client under this binding:
-
-* recognizes the meta-schema URIs it implements and applies
-  {{unknown-dialects}} to the rest;
-* constructs argument objects using wire names per {{wire-names}} and value
-  representations per {{value-representation}};
-* does not present a non-conforming structured result as conforming, per
-  {{client-validation}};
-* does not dereference `$id`, or any URI appearing in a semantic annotation,
-  as a consequence of processing a schema.
-
-Neither role is required to implement any particular add-in. A processor that
-implements Core only, encounters an activated add-in it does not implement,
-and cannot therefore enforce that add-in's constraints, MUST apply
-{{unknown-dialects}} rather than proceeding with partial enforcement.
+The value returned in `ElicitResult.content` MUST use the wire names of
+{{wire-names}} and the representations required by {{value-representation}}.
 
 # Security Considerations {#security-considerations}
 
@@ -794,106 +355,67 @@ The security considerations of MCP {{MCP}} and of JSON Structure Core
 {{JSTRUCT-CORE}} apply in full. The following are specific to this binding.
 
 Dialect confusion:
-: JSON Schema and JSON Structure share the keyword spellings `type`,
-  `properties`, `required`, `description`, and `$ref` with differing
-  semantics. A processor that misidentifies the dialect produces different
-  validation outcomes with no error raised, so a schema that appears to
-  constrain an argument may not constrain it at all. This is why
-  {{unknown-dialects}} prohibits reinterpretation and why
-  {{dialect-selection}} requires an explicit `$schema`.
+: JSON Schema and JSON Structure share keyword spellings with differing
+  semantics, so a processor that misidentifies the dialect validates
+  differently with no error raised. The server validates authoritatively per
+  {{validation}}; the exposure is on the reading side, where a host or a model
+  plans from a contract that was never enforced. Hence the explicit `$schema`
+  of {{dialect-selection}}, the rule in {{unknown-dialects}}, and the
+  {{negotiation}} requirement that keeps a JSON Structure schema away from a
+  client that has not said it can identify one.
 
 Retrieval during discovery:
 : Tool listing happens early, often before the host has made any trust
   decision about the server. A schema that requires a network fetch to
-  interpret converts `tools/list` into a request-forgery primitive aimed at
-  whatever the schema names, and leaks the fact and timing of tool discovery
-  to a third party. {{self-containment}} forbids `$import` and external
-  `$ref`. Clients MUST NOT dereference `$id`, and MUST NOT dereference the
-  `reference` URIs in semantic annotations, as a consequence of processing a
-  schema. Those URIs are identifiers; treat them as opaque strings.
+  interpret turns `tools/list` into a request-forgery primitive and leaks the
+  timing of tool discovery to a third party. {{self-containment}} forbids it,
+  and clients MUST NOT dereference `$id`, or any other URI a schema carries,
+  as a consequence of processing that schema.
 
-Server-controlled text in the model's context:
-: `description`, `descriptions`, and the `lang:` entries of `altnames` and
-  `altenums` are free text chosen by the server operator, and
-  {{annotations-model}} contemplates placing them in the model's context.
-  That is an instruction-injection surface, identical in kind to the one MCP
-  already identifies for `description` and `ToolAnnotations`. A client MUST
-  treat all such text as untrusted content, MUST NOT act on instructions
-  found in it, and MUST NOT make permission decisions on the basis of any
-  schema annotation from an untrusted server.
+Schema identity:
+: `$id` identifies a schema and nothing authenticates it, so a server naming
+  an `$id` outside its own namespace can make an unrelated schema look like
+  one the client trusts. {{root-form}} confines it to a namespace the server
+  controls; a client keying decisions on `$id` MUST scope them per server.
+
+Server-controlled text reaching the model:
+: MCP already identifies a tool `description` as an
+  [instruction-injection surface](https://modelcontextprotocol.io/specification/2026-07-28/server/tools#security-considerations).
+  This binding widens it: every Core annotation keyword, and every annotation
+  an activated add-in defines, carries free text the server operator chooses.
+  A client MUST treat all of it as untrusted and MUST NOT base permission
+  decisions on a schema annotation. Annotations describe data, not behavior.
 
 Silently unenforced constraints:
-: An add-in keyword that is not activated is ignored, not rejected. An
-  attacker who can influence a schema, or a careless author, can produce a
-  schema that reads as tightly constrained and enforces nothing.
-  {{extension-activation}} makes activation mandatory for servers and makes
-  the client's treatment explicit.
+: An unactivated add-in keyword is ignored, not rejected, so a schema can read
+  as tightly constrained and enforce nothing. {{extension-activation}} makes
+  activation mandatory for servers and the client's treatment explicit. A host
+  presenting a schema as evidence of what a tool accepts MUST NOT rely on an
+  unconfirmed keyword, nor on the weaker projection of {{fallback}}.
 
 Resource consumption during schema processing:
-: A schema arrives before any work is done and is processed by both parties.
-  Implementations MUST bound the size of a schema document, the depth of
-  nesting in `definitions`, the number and depth of `$ref` traversals, and
-  the cardinality of `enum`. Implementations MUST detect reference cycles
-  rather than recursing on them. A `pattern` value {{JSTRUCT-VALIDATION}} is
-  an ECMA-262 regular expression from an untrusted source, so implementations
-  MUST either use a matcher with non-exponential worst-case behavior or apply
-  a time bound, or both.
-
-Numeric precision as a correctness boundary:
-: `int64`, `uint64`, `int128`, `uint128`, and `decimal` travel as strings
-  precisely so that they survive the trip. An implementation that parses them
-  into IEEE 754 doubles reintroduces the silent-rounding failure the type
-  system was designed to prevent, and does so in a path where the values are
-  frequently monetary. See {{value-representation}}.
-
-Annotations are claims, not guarantees:
-: A `unit` of `m` does not make a value metres, and a `concepts` entry naming
-  a well-known ontology term does not make the value an instance of it.
-  Annotations improve the odds that a correct server is understood correctly.
-  They do nothing about an incorrect or hostile one, and a client MUST NOT
-  treat them as evidence.
+: Both parties process a schema before any tool is invoked, and MCP already
+  asks implementations to
+  [bound the cost of composition keywords](https://modelcontextprotocol.io/specification/2026-07-28/basic/index#composition-keyword-resource-use).
+  Implementations MUST bound schema size, nesting depth, `$ref` traversal,
+  and `enum` cardinality, and MUST detect reference cycles rather than
+  recursing on them. A `pattern` value {{JSTRUCT-VALIDATION}} is an ECMA-262
+  regular expression from an untrusted source, so implementations MUST use a
+  matcher with non-exponential worst-case behavior, apply a time bound, or
+  both.
 
 # IANA Considerations {#iana-considerations}
 
-This document has no IANA actions.
-
-The `_meta` keys defined in {{companion-carriage}} use the prefix
-`org.json-structure/`, derived from a domain name under the control of the
-JSON Structure project, per MCP's `_meta` key naming rules {{MCP}}. MCP
-maintains no registry of `_meta` keys.
+This document has no IANA actions. The extension identifier of
+{{negotiation}} uses the prefix `org.json-structure`, derived from a domain
+name under the control of the JSON Structure project, per MCP's
+[key naming rules](https://modelcontextprotocol.io/specification/2026-07-28/basic/index#meta).
+MCP maintains no registry of extension identifiers.
 
 --- back
-
-# Migrating a Tool Schema from JSON Schema {#migration}
-
-The following table maps the constructs most commonly found in an MCP
-`inputSchema` written as JSON Schema to their JSON Structure equivalents. It
-is informative.
-
-| JSON Schema | JSON Structure |
-|---|---|
-| `{"type":"object","properties":{...},"required":[...]}` | The same, plus a required `name`, plus root `$id` and `$schema`. |
-| `{"type":"integer"}` | `{"type":"int32"}`. `integer` is accepted as an alias. |
-| A 64-bit integer as `{"type":"integer"}` | `{"type":"int64"}`, represented as a JSON string. |
-| `{"type":"number"}` for money | `{"type":"decimal","precision":n,"scale":m}` with `currency`, represented as a JSON string. |
-| `{"type":"string","format":"date-time"}` | `{"type":"datetime"}`. |
-| `{"type":"string","format":"uuid"}` | `{"type":"uuid"}`. |
-| `{"type":"array","items":{"$ref":"#/$defs/X"}}` | `{"type":"array","items":{"type":{"$ref":"#/definitions/X"}}}`. `$ref` is the value of `type`, never a sibling of it. |
-| `{"type":"object","additionalProperties":{...}}` used as a dictionary | `{"type":"map","values":{...}}`. |
-| `{"type":"array","uniqueItems":true}` | `{"type":"set"}`. |
-| `oneOf` used as a discriminated union | `{"type":"choice","choices":{...}}`, or `$extends` on an `abstract` base with a `selector`. |
-| `oneOf`, `anyOf`, `allOf` used as constraints | The same keywords from Conditional Composition {{JSTRUCT-COMPOSITION}}, which are boolean combinators and do not merge type definitions. Each of `if`, `then`, and `else` must carry `type`. |
-| `$defs` | `definitions`. |
-| A property name that is not an identifier | An identifier property name plus `altnames` with a `json` entry carrying the wire name. |
-| `minimum`, `maxLength`, `pattern`, and the rest | The same names from Validation {{JSTRUCT-VALIDATION}}, which must be activated with `$uses`. |
-| `description` | `description`, optionally plus `descriptions` for other languages. |
-| No equivalent | `unit`, `ucumUnit`, `currency` {{JSTRUCT-UNITS}}. |
-| No equivalent | `concepts`, `semanticRole`, `observedProperty`, and the rest {{JSTRUCT-SEMANN}}. |
-| No equivalent | `identity`, `relations`, `targettype`, `cardinality` {{JSTRUCT-RELATIONS}}. |
 
 # Acknowledgments
 {:numbered="false"}
 
-Thanks to the Model Context Protocol maintainers and contributors, whose
-decision to add an explicit `$schema` keyword to the tool schema slots in
-protocol version 2025-11-25 is what makes a clean binding possible at all.
+Thanks to the Model Context Protocol maintainers, whose explicit `$schema`
+keyword makes this binding possible without extending the protocol.

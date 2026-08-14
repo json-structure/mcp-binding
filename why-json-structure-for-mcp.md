@@ -11,7 +11,7 @@ description string, and a schema. That is the entire surface. Everything the
 model believes about what your tool wants and what it hands back is inferred
 from those three fields, and two of them are short.
 
-So look at what a typical MCP tool schema actually says today:
+So look at what a typical MCP tool schema says today:
 
 ```json
 {
@@ -41,10 +41,21 @@ nothing validates, and that the client cannot use for anything except passing
 it along. That is where MCP servers are today, and it works, sort of, in the
 way that comments work as a type system.
 
-JSON Structure's answer is to put the meaning in the schema, structured, where
-both the client and the model can get at it.
+JSON Structure puts the meaning in the schema, structured, where both the
+client and the model can get at it.
 
-## Four things the annotation model adds
+The gap is measurable. Handed a bare JSON Schema tool surface for a reservoir
+and asked for a shift status, a model came back with this:
+
+> almost none of these numbers can be safely interpreted, because not one of
+> them carries a declared unit
+
+It was right. It also declined to issue the command it had been asked to
+issue. Same model, same data, same tools with the annotations in place: 0.43 m
+over the spillway crest, data flagged provisional, command sent. Ten scored
+scenarios are at the end of this piece.
+
+## Four things JSON Structure adds
 
 ### 1. Names the model can read and the wire still accepts
 
@@ -76,16 +87,16 @@ translation service was involved.
 
 `altenums` does the same for enumerated values, so a status field can travel
 as `"AWTG_APRV"` and still render as "Awaiting approval". The model gets to
-see both, which is precisely the pairing it needs in order to emit the code
-and talk about the meaning.
+see both, which is the pairing it needs: emit the code, talk about the
+meaning.
 
 None of this is exotic. It is the ordinary situation of any tool that fronts a
 system somebody else built. Today it lands in the description string as a
 sentence beginning "note that".
 
-### 2. Units, currencies, and the numbers that carry them
+### 2. Units, currencies, and the numbers that need them
 
-This is the one I would fix first.
+This is the one to fix first.
 
 ```json
 "waterLevel": { "type": "double", "unit": "m", "ucumUnit": "m" },
@@ -94,11 +105,11 @@ This is the one I would fix first.
 ```
 
 A `double` tells the model that the value is a number. `unit: "m"` tells it
-the value is metres. Those are not the same fact, and the gap between them is
-where a certain class of expensive mistake lives. Interfaces that agree on the
-number and disagree on the unit have a long and well-documented history of
-going badly, and we are now wiring these interfaces together with a component
-that infers rather than knows.
+the value is metres. Those are not the same fact. Interfaces that agree on the
+number and disagree on the unit cost NASA the Mars Climate Orbiter, and that
+was between two teams who spoke the same language and had a written interface
+spec. We are now wiring such interfaces together with a component that infers
+rather than knows.
 
 The gain runs both directions:
 
@@ -113,8 +124,8 @@ display symbol; `ucumUnit` is a machine-parseable expression a library can
 actually convert with. Carry both and the client can do real dimensional
 analysis without asking anybody's permission.
 
-Money gets the same treatment plus something JSON Schema simply cannot
-express. Core represents `decimal` as a JSON string, with `precision` and
+Money gets the same treatment, plus something JSON Schema cannot express at
+all. Core represents `decimal` as a JSON string, with `precision` and
 `scale` declared. So an invoice total travels as `"1234.56"` and arrives as
 `1234.56`, not as whatever IEEE 754 decided that afternoon. Add `currency:
 "EUR"` and the amount stops being a bare number that the model has to
@@ -125,7 +136,8 @@ this alone is worth the migration.
 
 ### 3. What the value means, not just what it is
 
-Units tell you the dimension. Semantic annotations tell you the thing.
+A unit pins down the dimension and stops there. What was measured, how it was
+reduced, and what it is measured against are all still open questions.
 
 ```json
 "waterLevel": {
@@ -133,7 +145,7 @@ Units tell you the dimension. Semantic annotations tell you the thing.
   "unit": "m",
   "semanticRole": "observationValue",
   "statistic": "mean",
-  "supportPeriod": { "duration": "PT10M", "anchor": "end" },
+  "supportPeriod": { "length": "PT10M", "anchor": "end" },
   "concepts": [
     { "reference": "http://www.w3.org/ns/sosa/hasSimpleResult",
       "kind": "rdf-property" }
@@ -153,29 +165,30 @@ staring at `{"type": "double"}` will recover it.
 The same applies wherever a value only means something relative to a system
 you have to name:
 
-- `coordinateReferenceSystem` binds a pair of properties into a coordinate and
-  says which CRS it is in. A latitude and longitude without a CRS is a pair of
-  numbers with a strong suggestion attached.
+- `coordinateReferenceSystem` binds one or more properties to the axes of a
+  named system. A latitude and longitude without a CRS is a pair of numbers
+  with a strong suggestion attached. A single axis counts too: a gauge height
+  without a datum is a number that is not an elevation and looks exactly like
+  one.
 - `temporalReferenceSystem` and `cadence` say what a timestamp is measured
   against and how often to expect the next one.
 - `codedValues` binds a coded property to an external code list, so a `status`
   of `4` resolves to something instead of inviting a guess.
-- `observedProperty` says what was actually measured, by reference, which is
-  the single most useful thing you can tell a model about a sensor reading.
+- `observedProperty` names what was measured, by reference. For a sensor
+  reading there is nothing more useful you can hand a model.
 
-The point of `concepts` in particular is that it hands the model a hook into
-knowledge it already has. Naming a SOSA or QUDT or schema.org term is cheaper
-than explaining the concept in prose and considerably more precise.
+`concepts` hands the model a hook into knowledge it already has. Naming a
+SOSA or QUDT or schema.org term is cheaper than explaining the concept in
+prose and considerably more precise.
 
 ### 4. Which output field goes into which tool next
 
-Here is the failure mode nobody writes down.
-
 Tool A returns `{"authorId": "8c1f...", "title": "..."}`. Tool B takes
 `{"id": "..."}`. The model has to work out that A's `authorId` is a valid
-argument for B's `id`, and that A's `title` is not. It usually gets this
-right. When it gets it wrong, it makes a call that succeeds, returns the wrong
-record, and nothing anywhere raises an error.
+argument for B's `id`, and that A's `title` is not. It gets this right often
+enough that you will not notice the times it does not, and when it does not,
+it makes a call that succeeds, returns the wrong record, and nothing anywhere
+raises an error.
 
 That is a schema problem, and JSON Structure Relations is a schema answer:
 
@@ -197,11 +210,10 @@ That is a schema problem, and JSON Structure Relations is a schema answer:
 ```
 
 `identity` says which property is the key. `relations` plus `targettype` says
-that this field points at that type, and how many of them. Suddenly the
-connections between your tools are declared rather than inferred, and a client
-can do something with them: pre-validate a chained call, offer the model a
-concrete next step, refuse a call that wires an author identity into a book
-lookup.
+that this field points at that type, and how many of them. The connections
+between your tools are now declared rather than inferred, and a client can
+enforce them: pre-validate a chained call, offer the model a concrete next
+step, refuse a call that wires an author identity into a book lookup.
 
 For a single tool this is a nicety. For an agent loop running twenty tools
 across four servers, it is the difference between a call graph and a pile of
@@ -217,8 +229,8 @@ retry turns at least announce themselves.
 
 Description strings that can go back to describing behavior. Every sentence
 you currently spend on "amounts are in euro cents" and "timestamps are UTC"
-and "pass the id from search_books here" is a sentence the schema can carry
-structurally, once, in a form the client can act on.
+and "pass the id from search_books here" is a sentence the schema can state
+once, structurally, in a form the client can act on.
 
 Work moved out of the model and into the client, where it belongs. Unit
 conversion, localization, form rendering, enum labelling, argument validation
@@ -232,46 +244,73 @@ conventions layered on `object` and `array`.
 
 ## What you do not get
 
-I would rather say this here than have you find it later.
+A JSON Structure schema is not readable as JSON Schema. `$ref` sits in a
+different place, half the types are unknown, and `int64` is a string. There is
+no graceful degradation, so the binding has to be an MCP extension: a client
+advertises that it understands the dialect, and a server that does not see
+that advertisement must fall back to a JSON Schema 2020-12 projection of the
+same schema. You can serve both populations, at the cost of generating that
+projection, which will accept more than the original does.
 
-Annotations are claims. A `unit` of `m` does not make a value metres, and a
-`concepts` entry does not make the value an instance of that concept. This
-raises the ceiling for a server that is trying to be correct. It does nothing
-about a server that is wrong or hostile, and the binding spec is blunt about
-that in its security considerations.
+The binding itself is small on purpose: one keyword's worth of dialect
+selection, plus a set of rules about what may appear. Somebody still has to
+write the validator and the annotation-aware rendering. Until they do, every
+client you meet takes the fallback projection.
 
-There is no graceful degradation. A JSON Structure schema is not readable as
-JSON Schema — `$ref` sits in a different place, half the types are unknown,
-and `int64` is a string. A client that does not implement the binding must
-refuse the schema rather than misread it. The binding defines companion
-carriage in `_meta` precisely so that you can serve both populations, and it
-costs you the bytes of two schemas.
+A `unit` of `m` does not make a value metres, and a `concepts` entry does not
+make the value an instance of that concept. Annotations are claims. They help
+a server that is trying to be correct and do nothing about one that is wrong
+or hostile, and the binding spec is blunt about that in its security
+considerations.
 
-Relations has no `$uses` identifier yet. The keywords work, and Core permits
-unknown keywords, so they travel and a knowing client can read them. But they
-are not gated by a published add-in at the time of writing, which means no
-meta-schema validates them.
+The Relations keywords work, and Core permits unknown keywords, so they travel
+and a knowing client can read them. But Relations has no published `$uses`
+identifier at the time of writing, so no meta-schema validates them.
 
-Semantic annotations have no registry. The `kind` values are open by design
-and a future revision is expected to establish a registry. Until then, two
-servers can name the same vocabulary differently and nothing will catch it.
-
-Client support has to be built. This is the honest bottleneck. The binding is
-small on purpose — it is one keyword's worth of dialect selection plus a set
-of rules about what may appear — but somebody has to write the validator and
-the annotation-aware rendering, and until they do, companion carriage is how
-you ship.
+The `kind` values in the semantic annotations are open by design, and a future
+revision is expected to establish a registry. Until it does, two servers can
+name the same vocabulary differently and nothing will catch it.
 
 ## Where to start
+
+There is a runnable A/B server in [`src/`](src/README.md): one fictional water
+operations system, served once as JSON Schema and once as JSON Structure, with
+identical tool names, identical description strings, and identical data. Same
+model on both sides, ten scenarios, and the schema as the only variable.
+
+Asked to cut a release to 60 cubic feet per second, the baseline sent `60`. The
+server takes cubic metres per second, so that is 35 times the intended flow,
+and it lands inside the permitted range, so it is accepted without error. The
+model's stated reasoning: it had "assumed the server interprets it in cubic
+feet per second". Put `unit` and `ucumUnit` on that one argument, change
+nothing else, and it converts to 1.699 and cites the annotation as the reason.
+
+The rest fail differently, and the difference is the interesting part. Asked
+whether the forebay is over the spillway crest, the baseline reaches the right
+number but at low confidence, warning that the answer flips if `level` turns
+out to be in other units. Asked for a billing figure in dollars, it refuses
+outright, because nothing tells it what currency the number is in. Asked for a
+shift status and a setpoint together, it produces the refusal at the top of
+this piece and calls the spill state "unclear". It is not wrong. It is
+useless.
+
+Eight wins, two ties, no losses. The two ties are the scenarios where the
+baseline was already fine: an unfamiliar identifier shape, which it looked up
+rather than guessed at, and a call that takes no arguments. So an agent on a
+bare schema does one of three things: it hedges, it refuses, or it commits.
+Two of those waste your afternoon. The third one moves water.
 
 Pick one tool. Preferably one with a unit, a currency, or an identifier that
 another tool consumes, because that is where the payoff is visible.
 
-Point its `inputSchema` at
+Set `$schema` inside its `inputSchema` to
 `https://json-structure.org/meta/extended/v0/#`, add
 `"$uses": ["JSONStructureUnits", "JSONStructureValidation"]`, and annotate the
-two or three properties that were carrying meaning in the description string.
-Keep companion carriage on while your clients catch up.
+two or three properties that were smuggling meaning in the description string.
+The semantic annotations of section 3 live behind their own meta-schema,
+`https://json-structure.org/meta/semantic-annotations/v0/#`, so pick that one
+if the observation annotations are what you came for. Keep the fallback
+projection working while your clients catch up.
 
 Then read the binding spec for the rules, particularly the ones about
 self-containment and extension activation. The second of those is the one

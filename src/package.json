@@ -1,0 +1,22 @@
+{
+  "name": "cascade-basin-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A/B MCP server: identical tools, identical data, two schema dialects.",
+  "scripts": {
+    "start": "tsx server.ts",
+    "jsonschema": "tsx server.ts --mode=jsonschema",
+    "jsonstructure": "tsx server.ts --mode=jsonstructure",
+    "dump": "tsx dump-schemas.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
