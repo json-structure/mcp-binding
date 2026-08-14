@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>JSON Structure: Model Context Protocol Binding</title>
+<meta content="Clemens Vasters" name="author">
+<meta content="
+       This document defines a binding that allows the schema slots of the Model
+Context Protocol (MCP)   to carry JSON Structure  
+schemas. It defines an MCP extension through which a client advertises that it
+understands the dialect, selects the dialect with the  $schema  keyword MCP
+already provides, and requires a server to fall back to JSON Schema for clients
+that do not implement the extension. The binding is opt-in per schema slot and
+introduces no new MCP methods or message types. 
+    " name="description">
+<meta content="xml2rfc 3.34.0" name="generator">
+<meta content="Internet-Draft" name="keyword">
+<meta content="draft-vasters-json-structure-mcp-binding-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.11.0
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.8.2
+-->
+<link href="draft-vasters-json-structure-mcp-binding.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left"></td>
+<td class="center">JSON Structure MCP Binding</td>
+<td class="right">August 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Vasters</td>
+<td class="center">Standards Track</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Building Blocks for HTTP APIs</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-08-13" class="published">13 August 2026</time>
+    </dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">C. Vasters</div>
+<div class="org">Microsoft Corporation</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">JSON Structure: Model Context Protocol Binding</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document defines a binding that allows the schema slots of the Model
+Context Protocol (MCP) <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> to carry JSON Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>
+schemas. It defines an MCP extension through which a client advertises that it
+understands the dialect, selects the dialect with the <code>$schema</code> keyword MCP
+already provides, and requires a server to fall back to JSON Schema for clients
+that do not implement the extension. The binding is opt-in per schema slot and
+introduces no new MCP methods or message types.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://json-structure.github.io/mcp-binding/draft-vasters-json-structure-mcp-binding.html">https://json-structure.github.io/mcp-binding/draft-vasters-json-structure-mcp-binding.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-vasters-json-structure-mcp-binding/">https://datatracker.ietf.org/doc/draft-vasters-json-structure-mcp-binding/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3"></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/json-structure/mcp-binding">https://github.com/json-structure/mcp-binding</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<section class="note" id="section-note.2">
+      <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+      </h2>
+<p id="section-note.2-1">Copyright (c) 2026 Microsoft Corporation. All rights reserved.<a href="#section-note.2-1" class="pilcrow">¶</a></p>
+<p id="section-note.2-2">This is a pre-submission working draft, published for public review and
+comment. It is not a standard, it does not represent a commitment by Microsoft
+Corporation, and its content may change or be withdrawn at any time.<a href="#section-note.2-2" class="pilcrow">¶</a></p>
+<p id="section-note.2-3">Permission is granted to read, reproduce, and redistribute this document in
+unmodified form, in whole or in part, for the purpose of review and comment,
+provided that this notice is retained. No other rights are granted, whether by
+implication, estoppel, or otherwise, and no licence to any patent, trademark,
+or other intellectual property right is granted by this document.<a href="#section-note.2-3" class="pilcrow">¶</a></p>
+<p id="section-note.2-4">Microsoft Corporation intends to submit this document to a standards body. On
+submission, the contribution and intellectual property policies of that body
+govern this document and supersede this notice.<a href="#section-note.2-4" class="pilcrow">¶</a></p>
+<p id="section-note.2-5">This document is provided "as is", without warranty of any kind.<a href="#section-note.2-5" class="pilcrow">¶</a></p>
+</section>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-terminology" class="internal xref">Conventions and Terminology</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-dialect-selection" class="internal xref">Dialect Selection</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-recognized-meta-schema-uris" class="internal xref">Recognized Meta-Schema URIs</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-unrecognized-dialects" class="internal xref">Unrecognized Dialects</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-extension-negotiation" class="internal xref">Extension Negotiation</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-fallback" class="internal xref">Fallback</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-schema-requirements" class="internal xref">Schema Requirements</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-root-form" class="internal xref">Root Form</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-zero-argument-tools" class="internal xref">Zero-Argument Tools</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-self-containment" class="internal xref">Self-Containment</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-extension-activation" class="internal xref">Extension Activation</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-names-on-the-wire" class="internal xref">Names on the Wire</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-value-representation" class="internal xref">Value Representation</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-validation" class="internal xref">Validation</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-elicitation" class="internal xref">Elicitation</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">The Model Context Protocol <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> lets a server describe the tools it offers
+to a language model. A tool carries an <code>inputSchema</code> for its arguments and
+optionally an <code>outputSchema</code> for its structured result, and a server may ask
+the user for information with a form-mode elicitation <code>requestedSchema</code>. All
+three are schema documents that travel inside a JSON-RPC <span>[<a href="#JSONRPC" class="cite xref">JSONRPC</a>]</span> message.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">MCP's definition of these slots is thin. The wire type constrains the root to
+<code>"type": "object"</code> with <code>properties</code> and <code>required</code> and leaves everything
+below the first level unconstrained. MCP's
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/index#json-schema-usage">JSON Schema usage rules</a>
+permit a schema to name its dialect in <code>$schema</code> and default to JSON Schema
+2020-12 when it is absent. This document uses that keyword and no other
+extension point.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">Adoption is per schema slot, and a server <span class="bcp14">MAY</span> bind one slot while leaving
+another in the default dialect. The binding is an MCP extension
+(<a href="#negotiation" class="auto internal xref">Section 4</a>), so a client that does not implement it never receives a JSON
+Structure schema and needs no changes. This document governs the three schema
+slots and <code>structuredContent</code> and nothing else in MCP, which remains
+authoritative for everything not modified here.<a href="#section-1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conventions-and-terminology">
+<section id="section-2">
+      <h2 id="name-conventions-and-terminology">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-terminology" class="section-name selfRef">Conventions and Terminology</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-2">
+        <dt id="section-2-2.1">Schema slot:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.2">
+          <p id="section-2-2.2.1">A location in an MCP message whose value is a schema document. This
+document binds three: <code>Tool.inputSchema</code>, <code>Tool.outputSchema</code>, and the
+<code>requestedSchema</code> of a form-mode <code>elicitation/create</code> request <span>[<a href="#MCP" class="cite xref">MCP</a>]</span>.<a href="#section-2-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.3">Bound slot:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.4">
+          <p id="section-2-2.4.1">A schema slot whose value is a JSON Structure schema under this binding.<a href="#section-2-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-2-3">Terms defined by JSON Structure Core <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> and by MCP <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> are
+used as defined there. Argument object and structured result mean the values
+of <code>params.arguments</code> in a <code>tools/call</code> request and of <code>structuredContent</code> in
+a <code>CallToolResult</code>.<a href="#section-2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="dialect-selection">
+<section id="section-3">
+      <h2 id="name-dialect-selection">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-dialect-selection" class="section-name selfRef">Dialect Selection</a>
+      </h2>
+<div id="meta-schema-uris">
+<section id="section-3.1">
+        <h3 id="name-recognized-meta-schema-uris">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-recognized-meta-schema-uris" class="section-name selfRef">Recognized Meta-Schema URIs</a>
+        </h3>
+<p id="section-3.1-1">A schema slot is a JSON Structure schema under this binding when its
+<code>$schema</code> member is present and its value is one of the following URIs:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">URI</th>
+              <th class="text-left" rowspan="1" colspan="1">Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://json-structure.org/meta/core/v0/#</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Core <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> only. No add-ins.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://json-structure.org/meta/extended/v0/#</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Core plus the add-ins that meta-schema offers, each of which must be activated with <code>$uses</code>.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://json-structure.org/meta/validation/v0/#</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Core with all offered add-ins activated by default.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://json-structure.org/meta/semantic-annotations/v0/#</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Core plus the semantic annotation add-in, which must be activated with <code>$uses</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-3.1-3">The list is not closed: a future JSON Structure meta-schema URI, or a private
+meta-schema that itself references one of the above, is recognized if the
+processor knows it. A processor that does not know a <code>$schema</code> value <span class="bcp14">MUST</span>
+apply <a href="#unknown-dialects" class="auto internal xref">Section 3.2</a>.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-4">A bound slot <span class="bcp14">MUST</span> carry <code>$schema</code> explicitly, and a server <span class="bcp14">MUST NOT</span> emit a
+JSON Structure schema in a slot with <code>$schema</code> absent. MCP defines an absent
+<code>$schema</code> to mean JSON Schema 2020-12, and a processor that reads a JSON
+Structure schema as JSON Schema will misinterpret it.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="unknown-dialects">
+<section id="section-3.2">
+        <h3 id="name-unrecognized-dialects">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-unrecognized-dialects" class="section-name selfRef">Unrecognized Dialects</a>
+        </h3>
+<p id="section-3.2-1">A recognized <code>$schema</code> value is one the processor implements. Anything else is
+governed by MCP's rule for
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/index#implementation-requirements">unsupported dialects</a>,
+and a client <span class="bcp14">MUST NOT</span> fall back to reading the document as JSON Schema. See
+<a href="#security-considerations" class="auto internal xref">Section 10</a>.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="negotiation">
+<section id="section-4">
+      <h2 id="name-extension-negotiation">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-extension-negotiation" class="section-name selfRef">Extension Negotiation</a>
+      </h2>
+<p id="section-4-1">This binding is an MCP
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning#extension-negotiation">extension</a>
+with the identifier <code>org.json-structure/schema-binding</code>. A client that
+implements it <span class="bcp14">MUST</span> advertise that identifier in the <code>extensions</code> map of its
+client capabilities, and a server that implements it <span class="bcp14">MUST</span> advertise the same
+identifier in the <code>extensions</code> map of its server capabilities. Its settings
+object is empty in this revision, and a party <span class="bcp14">MUST</span> ignore members of it that it
+does not recognize.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">A server <span class="bcp14">MUST NOT</span> place a JSON Structure schema in a schema slot for a client
+that has not advertised the identifier. Where the client has, the schema slot
+holds the JSON Structure schema document itself, and its <code>$schema</code> member
+selects the dialect per <a href="#meta-schema-uris" class="auto internal xref">Section 3.1</a>.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4-3">
+<pre>
+"inputSchema": {
+  "$schema": "https://json-structure.org/meta/extended/v0/#",
+  "$id": "https://tools.example.com/schemas/convert-temp-input",
+  "$uses": ["JSONStructureValidation"],
+  "name": "ConvertTemperatureInput",
+  "type": "object",
+  "properties": { "celsius": { "type": "double", "minimum": -273.15 } },
+  "required": ["celsius"]
+}
+</pre><a href="#section-4-3" class="pilcrow">¶</a>
+</div>
+<div id="fallback">
+<section id="section-4.1">
+        <h3 id="name-fallback">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-fallback" class="section-name selfRef">Fallback</a>
+        </h3>
+<p id="section-4.1-1">A server <span class="bcp14">MUST</span> remain usable by a client that has not advertised the identifier.
+For such a client it <span class="bcp14">MUST</span> place in the schema slot a JSON Schema 2020-12
+projection of the JSON Structure schema that governs the slot.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">The projection <span class="bcp14">MUST</span> accept every instance the JSON Structure schema accepts. It
+will ordinarily accept more, because Core draws distinctions JSON Schema cannot
+express. The JSON Structure schema remains authoritative: a server validates
+per <a href="#validation" class="auto internal xref">Section 8</a> against it and not against the projection, so a client that
+checks an argument object against the projection <span class="bcp14">MAY</span> find the server rejects
+what the projection allowed. This document does not define the mapping.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="schema-requirements">
+<section id="section-5">
+      <h2 id="name-schema-requirements">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-schema-requirements" class="section-name selfRef">Schema Requirements</a>
+      </h2>
+<p id="section-5-1">A JSON Structure schema in a bound slot <span class="bcp14">MUST</span> be a valid schema document per
+JSON Structure Core <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> and the add-ins it activates, subject to
+the requirements in this section.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="root-form">
+<section id="section-5.1">
+        <h3 id="name-root-form">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-root-form" class="section-name selfRef">Root Form</a>
+        </h3>
+<p id="section-5.1-1">The root of a bound <code>inputSchema</code> or <code>requestedSchema</code> <span class="bcp14">MUST</span> declare
+<code>"type": "object"</code> inline, and <code>$root</code> <span class="bcp14">MUST NOT</span> be present, since Core makes
+the two mutually exclusive. MCP requires those
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/server/tools#tool">slots</a>
+to carry <code>"type": "object"</code> at the root; that is MCP's wire type rather than a
+property of Core, whose <code>choice</code> and <code>map</code> types also produce JSON objects and
+would otherwise qualify. The root of a bound <code>outputSchema</code> <span class="bcp14">MAY</span> declare any
+Core type inline, or <span class="bcp14">MAY</span> designate one through <code>$root</code>, since MCP constrains
+neither the keyword nor the type there. The <code>name</code> Core requires on the root
+<span class="bcp14">SHOULD</span> be derived from the tool name, transformed as needed to satisfy Core's
+identifier production. The <code>$id</code> Core requires <span class="bcp14">MUST</span> be in a namespace the
+server controls; it identifies the schema, is not a retrieval address, and a
+client <span class="bcp14">MUST NOT</span> dereference it. See <a href="#security-considerations" class="auto internal xref">Section 10</a>.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="zero-argument-tools">
+<section id="section-5.2">
+        <h3 id="name-zero-argument-tools">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-zero-argument-tools" class="section-name selfRef">Zero-Argument Tools</a>
+        </h3>
+<p id="section-5.2-1">MCP describes a tool that takes no arguments with an object schema carrying
+<code>"additionalProperties": false</code> and no properties, while Core requires an
+<code>object</code> type to declare at least one property. A bound <code>inputSchema</code> for such
+a tool <span class="bcp14">MUST</span> declare <code>"additionalProperties": false</code> and exactly one property,
+named <code>null</code> and of type <code>null</code>, which <span class="bcp14">MUST NOT</span> appear in <code>required</code>. An empty
+<code>arguments</code> object then satisfies both specifications, and the property carries
+no argument value. This convention applies to a bound <code>inputSchema</code> only; no
+schema in another slot may use it to stand in for an empty property set.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="self-containment">
+<section id="section-5.3">
+        <h3 id="name-self-containment">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-self-containment" class="section-name selfRef">Self-Containment</a>
+        </h3>
+<p id="section-5.3-1">A schema in a bound slot <span class="bcp14">MUST</span> be self-contained. The Import add-in
+<span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span> is not permitted: a schema <span class="bcp14">MUST NOT</span> name
+<code>JSONStructureImport</code> in <code>$uses</code>, and <code>$import</code> and <code>$importdefs</code> <span class="bcp14">MUST NOT</span>
+appear even where the selected meta-schema activates the add-in by default. A
+server composing schemas from imported libraries <span class="bcp14">MUST</span> resolve those imports,
+as <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span> defines that operation, before transmission.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<p id="section-5.3-2">No member may carry a URI that a processor is expected to retrieve in order
+to interpret the schema. MCP already
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/index#ref-resolution">forbids automatic dereferencing</a>
+of a <code>$ref</code> that resolves to a network URI; this binding admits no external
+reference at all. The only outward-pointing URI in a bound slot is <code>$schema</code>,
+matched against <a href="#meta-schema-uris" class="auto internal xref">Section 3.1</a> rather than fetched. See
+<a href="#security-considerations" class="auto internal xref">Section 10</a>.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="extension-activation">
+<section id="section-5.4">
+        <h3 id="name-extension-activation">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-extension-activation" class="section-name selfRef">Extension Activation</a>
+        </h3>
+<p id="section-5.4-1">If a schema in a bound slot uses a keyword defined by an add-in, it <span class="bcp14">MUST</span>
+activate that add-in, by naming it in <code>$uses</code> or by selecting a meta-schema
+that activates it by default. A server <span class="bcp14">MUST NOT</span> emit a bound slot containing
+an unactivated add-in keyword. A client that finds one <span class="bcp14">MUST</span> treat the
+instance as unconstrained by that keyword, <span class="bcp14">SHOULD</span> report the condition, and
+<span class="bcp14">MAY</span> treat the schema as malformed.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="wire-names">
+<section id="section-6">
+      <h2 id="name-names-on-the-wire">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-names-on-the-wire" class="section-name selfRef">Names on the Wire</a>
+      </h2>
+<p id="section-6-1">MCP places no restriction on the keys of an argument object or a structured
+result, while Core constrains property names to its identifier production.
+The reserved <code>json</code> purpose indicator of <code>altnames</code> <span>[<a href="#JSTRUCT-ALTNAMES" class="cite xref">JSTRUCT-ALTNAMES</a>]</span>
+reconciles the two: the key that identifies a property on the wire is the
+value of that property's <code>altnames</code> member under the key <code>json</code> if present,
+and the property name itself otherwise. A property named <code>maxResults</code> carrying
+<code>"altnames": { "json": "max-results" }</code> therefore appears in an argument
+object as <code>{"max-results": 20}</code>.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-2">A schema that uses <code>altnames</code> for this purpose <span class="bcp14">MUST</span> activate
+<code>JSONStructureAlternateNames</code> per <a href="#extension-activation" class="auto internal xref">Section 5.4</a>. Two properties of
+the same type <span class="bcp14">MUST NOT</span> resolve to the same wire name. Purpose indicators
+other than <code>json</code> do not affect the wire form.<a href="#section-6-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="value-representation">
+<section id="section-7">
+      <h2 id="name-value-representation">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-value-representation" class="section-name selfRef">Value Representation</a>
+      </h2>
+<p id="section-7-1">An argument object and a structured result are JSON <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span> values whose
+representation is fixed by JSON Structure Core <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. This binding
+changes nothing about it and permits no leniency. Core represents the numeric
+types that exceed exact IEEE 754 double precision as JSON strings, so a
+<code>tools/call</code> request carrying an <code>int64</code> argument sends
+<code>{"count": "9007199254740993"}</code>, not a JSON number. Servers and clients <span class="bcp14">MUST NOT</span> coerce such a value to a JSON number, and <span class="bcp14">MUST NOT</span> parse it into a binary
+floating-point value in transit, which would reintroduce the silent-rounding
+failure the type system exists to prevent.<a href="#section-7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="validation">
+<section id="section-8">
+      <h2 id="name-validation">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-validation" class="section-name selfRef">Validation</a>
+      </h2>
+<p id="section-8-1">A server <span class="bcp14">MUST</span> validate the argument object of a <code>tools/call</code> request against
+the bound <code>inputSchema</code>, per JSON Structure Core <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> and the
+add-ins the schema activates, before executing the tool. If validation fails
+the server <span class="bcp14">MUST NOT</span> execute the tool. MCP classifies input validation failure
+as a <a href="https://modelcontextprotocol.io/specification/2026-07-28/server/tools#error-handling">tool execution error</a>,
+so the server <span class="bcp14">SHOULD</span> report it as a <code>CallToolResult</code> with <code>isError</code> set to
+<code>true</code> and a diagnostic in <code>content</code>, which lets the model correct itself. A
+server <span class="bcp14">MAY</span> instead return a JSON-RPC error <span>[<a href="#JSONRPC" class="cite xref">JSONRPC</a>]</span> with code <code>-32602</code>
+where the request is malformed rather than merely invalid. A diagnostic
+<span class="bcp14">SHOULD</span> identify each failing location with a JSON Pointer <span>[<a href="#RFC6901" class="cite xref">RFC6901</a>]</span> into
+the argument object and name the keyword that failed.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">Where a bound <code>outputSchema</code> is present, MCP already requires the server to
+produce a <a href="https://modelcontextprotocol.io/specification/2026-07-28/server/tools#output-schema">conforming value</a>
+in <code>structuredContent</code>;
+under this binding that means validity per Core and the activated add-ins. A
+server <span class="bcp14">MUST NOT</span> return a structured result that does not validate, and
+returns an error result instead. Where a server also mirrors the structured
+result into a text content block, as MCP recommends for clients that predate
+<code>structuredContent</code>, that block <span class="bcp14">MUST</span> contain the JSON serialization
+<span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span> of the same value.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">A client that implements this binding <span class="bcp14">SHOULD</span> validate a structured result
+against the bound <code>outputSchema</code> before presenting it to the model, and <span class="bcp14">MUST NOT</span> present a non-conforming result as though it conformed; it <span class="bcp14">MAY</span> describe
+the discrepancy, or fall back to the unstructured <code>content</code> list. A client <span class="bcp14">MAY</span>
+validate an argument object before sending it, which does not relieve the
+server of its obligation.<a href="#section-8-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="elicitation">
+<section id="section-9">
+      <h2 id="name-elicitation">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-elicitation" class="section-name selfRef">Elicitation</a>
+      </h2>
+<p id="section-9-1">MCP restricts <code>requestedSchema</code> for
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation#requested-schema">form-mode elicitation</a>
+to a narrow profile of top-level primitives, and this binding preserves it. A
+bound <code>requestedSchema</code> <span class="bcp14">MUST</span> satisfy <a href="#schema-requirements" class="auto internal xref">Section 5</a> and, in
+addition:<a href="#section-9-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9-2.1">
+          <p id="section-9-2.1.1">The root <span class="bcp14">MUST</span> declare at least one property, and the convention of
+<a href="#zero-argument-tools" class="auto internal xref">Section 5.2</a> <span class="bcp14">MUST NOT</span> be used.<a href="#section-9-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.2">
+          <p id="section-9-2.2.1"><code>definitions</code> <span class="bcp14">MUST NOT</span> be present and <code>$ref</code> <span class="bcp14">MUST NOT</span> be used.<a href="#section-9-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.3">
+          <p id="section-9-2.3.1">Each property <span class="bcp14">MUST</span> declare as its <code>type</code> one of <code>string</code>, <code>boolean</code>,
+<code>number</code>, <code>integer</code>, <code>int8</code>, <code>uint8</code>, <code>int16</code>, <code>uint16</code>, <code>int32</code>, <code>uint32</code>,
+<code>float</code>, <code>double</code>, <code>date</code>, <code>datetime</code>, or <code>uri</code>; or <code>enum</code> alongside
+<code>string</code> for single selection; or <code>array</code> or <code>set</code> over an
+<code>enum</code>-constrained <code>string</code> for multiple selection. No other compound type.<a href="#section-9-2.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-9-3">The value returned in <code>ElicitResult.content</code> <span class="bcp14">MUST</span> use the wire names of
+<a href="#wire-names" class="auto internal xref">Section 6</a> and the representations required by <a href="#value-representation" class="auto internal xref">Section 7</a>.<a href="#section-9-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-10">
+      <h2 id="name-security-considerations">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-10-1">The security considerations of MCP <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> and of JSON Structure Core
+<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> apply in full. The following are specific to this binding.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-10-2">
+        <dt id="section-10-2.1">Dialect confusion:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.2">
+          <p id="section-10-2.2.1">JSON Schema and JSON Structure share keyword spellings with differing
+semantics, so a processor that misidentifies the dialect validates
+differently with no error raised. The server validates authoritatively per
+<a href="#validation" class="auto internal xref">Section 8</a>; the exposure is on the reading side, where a host or a model
+plans from a contract that was never enforced. Hence the explicit <code>$schema</code>
+of <a href="#dialect-selection" class="auto internal xref">Section 3</a>, the rule in <a href="#unknown-dialects" class="auto internal xref">Section 3.2</a>, and the
+<a href="#negotiation" class="auto internal xref">Section 4</a> requirement that keeps a JSON Structure schema away from a
+client that has not said it can identify one.<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.3">Retrieval during discovery:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.4">
+          <p id="section-10-2.4.1">Tool listing happens early, often before the host has made any trust
+decision about the server. A schema that requires a network fetch to
+interpret turns <code>tools/list</code> into a request-forgery primitive and leaks the
+timing of tool discovery to a third party. <a href="#self-containment" class="auto internal xref">Section 5.3</a> forbids it,
+and clients <span class="bcp14">MUST NOT</span> dereference <code>$id</code>, or any other URI a schema carries,
+as a consequence of processing that schema.<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.5">Schema identity:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.6">
+          <p id="section-10-2.6.1"><code>$id</code> identifies a schema and nothing authenticates it, so a server naming
+an <code>$id</code> outside its own namespace can make an unrelated schema look like
+one the client trusts. <a href="#root-form" class="auto internal xref">Section 5.1</a> confines it to a namespace the server
+controls; a client keying decisions on <code>$id</code> <span class="bcp14">MUST</span> scope them per server.<a href="#section-10-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.7">Server-controlled text reaching the model:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.8">
+          <p id="section-10-2.8.1">MCP already identifies a tool <code>description</code> as an
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/server/tools#security-considerations">instruction-injection surface</a>.
+This binding widens it: every Core annotation keyword, and every annotation
+an activated add-in defines, carries free text the server operator chooses.
+A client <span class="bcp14">MUST</span> treat all of it as untrusted and <span class="bcp14">MUST NOT</span> base permission
+decisions on a schema annotation. Annotations describe data, not behavior.<a href="#section-10-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.9">Silently unenforced constraints:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.10">
+          <p id="section-10-2.10.1">An unactivated add-in keyword is ignored, not rejected, so a schema can read
+as tightly constrained and enforce nothing. <a href="#extension-activation" class="auto internal xref">Section 5.4</a> makes
+activation mandatory for servers and the client's treatment explicit. A host
+presenting a schema as evidence of what a tool accepts <span class="bcp14">MUST NOT</span> rely on an
+unconfirmed keyword, nor on the weaker projection of <a href="#fallback" class="auto internal xref">Section 4.1</a>.<a href="#section-10-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.11">Resource consumption during schema processing:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.12">
+          <p id="section-10-2.12.1">Both parties process a schema before any tool is invoked, and MCP already
+asks implementations to
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/index#composition-keyword-resource-use">bound the cost of composition keywords</a>.
+Implementations <span class="bcp14">MUST</span> bound schema size, nesting depth, <code>$ref</code> traversal,
+and <code>enum</code> cardinality, and <span class="bcp14">MUST</span> detect reference cycles rather than
+recursing on them. A <code>pattern</code> value <span>[<a href="#JSTRUCT-VALIDATION" class="cite xref">JSTRUCT-VALIDATION</a>]</span> is an ECMA-262
+regular expression from an untrusted source, so implementations <span class="bcp14">MUST</span> use a
+matcher with non-exponential worst-case behavior, apply a time bound, or
+both.<a href="#section-10-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-11">
+      <h2 id="name-iana-considerations">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-11-1">This document has no IANA actions. The extension identifier of
+<a href="#negotiation" class="auto internal xref">Section 4</a> uses the prefix <code>org.json-structure</code>, derived from a domain
+name under the control of the JSON Structure project, per MCP's
+<a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/index#meta">key naming rules</a>.
+MCP maintains no registry of extension identifiers.<a href="#section-11-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-normative-references">
+<section id="section-12">
+      <h2 id="name-normative-references">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+      </h2>
+<dl class="references">
+<dt id="JSONRPC">[JSONRPC]</dt>
+      <dd>
+<span class="refAuthor">JSON-RPC Working Group</span>, <span class="refTitle">"JSON-RPC 2.0 Specification"</span>, <time datetime="2013" class="refDate">2013</time>, <span>&lt;<a href="https://www.jsonrpc.org/specification">https://www.jsonrpc.org/specification</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-ALTNAMES">[JSTRUCT-ALTNAMES]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Alternate Names"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/alternate-names/draft-vasters-json-structure-alternate-names.html">https://json-structure.github.io/alternate-names/draft-vasters-json-structure-alternate-names.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-CORE">[JSTRUCT-CORE]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Core"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/core/draft-vasters-json-structure-core.html">https://json-structure.github.io/core/draft-vasters-json-structure-core.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-IMPORT">[JSTRUCT-IMPORT]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Import"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/import/draft-vasters-json-structure-import.html">https://json-structure.github.io/import/draft-vasters-json-structure-import.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-VALIDATION">[JSTRUCT-VALIDATION]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Validation"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/validation/draft-vasters-json-structure-validation.html">https://json-structure.github.io/validation/draft-vasters-json-structure-validation.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MCP">[MCP]</dt>
+      <dd>
+<span class="refAuthor">Model Context Protocol Contributors</span>, <span class="refTitle">"Model Context Protocol Specification, Version 2026-07-28"</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://modelcontextprotocol.io/specification/2026-07-28">https://modelcontextprotocol.io/specification/2026-07-28</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+      <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6901">[RFC6901]</dt>
+      <dd>
+<span class="refAuthor">Bryan, P., Ed.</span>, <span class="refAuthor">Zyp, K.</span>, and <span class="refAuthor">M. Nottingham, Ed.</span>, <span class="refTitle">"JavaScript Object Notation (JSON) Pointer"</span>, <span class="seriesInfo">RFC 6901</span>, <span class="seriesInfo">DOI 10.17487/RFC6901</span>, <time datetime="2013-04" class="refDate">April 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6901">https://www.rfc-editor.org/rfc/rfc6901</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+      <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8259">[RFC8259]</dt>
+    <dd>
+<span class="refAuthor">Bray, T., Ed.</span>, <span class="refTitle">"The JavaScript Object Notation (JSON) Data Interchange Format"</span>, <span class="seriesInfo">STD 90</span>, <span class="seriesInfo">RFC 8259</span>, <span class="seriesInfo">DOI 10.17487/RFC8259</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8259">https://www.rfc-editor.org/rfc/rfc8259</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-A">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-A-1">Thanks to the Model Context Protocol maintainers, whose explicit <code>$schema</code>
+keyword makes this binding possible without extending the protocol.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Clemens Vasters</span></div>
+<div dir="auto" class="left"><span class="org">Microsoft Corporation</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:clemensv@microsoft.com" class="email">clemensv@microsoft.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
