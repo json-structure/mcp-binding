@@ -11,6 +11,39 @@ description string, and a schema. That is the entire surface. Everything the
 model believes about what your tool wants and what it hands back is inferred
 from those three fields, and two of them are short.
 
+So here is the experiment. Two MCP servers over one fictional domain. Same six
+tools, same tool names, same description strings byte for byte, same data. One
+serves JSON Schema. The other serves JSON Structure. Ten prompts, both
+servers, same model. Eight wins, two ties, no losses for the annotated side.
+The code is in [`src/`](src/README.md) and the scoring is in
+[`src/eval/prompts.md`](src/eval/prompts.md).
+
+The first prompt is the one to read. A tool sets a flow rate. Its schema says
+`{"type": "number"}` and its description says "Target release rate." Asked for
+60 cubic feet per second, the JSON Schema run sent `60`. The tool reads cubic
+metres per second, so that is 2,119 cfs, about 35 times the request, and it
+falls inside the tool's permitted range. The call succeeded. No error, no
+retry, no signal of any kind.
+
+The model explained itself:
+
+> the schema types `rate` as a bare number with no unit … I passed the value
+> as-is and assumed the server interprets it in cubic feet per second
+
+The JSON Structure run carries `unit` and `ucumUnit` on that argument and
+nothing else different. It sent 1.699 and named the annotation as the reason.
+
+That is one prompt in ten. The rest fail more quietly. Asked whether a water
+level was above a spillway crest, the JSON Schema run reached the right number
+and then would not stand behind it. Asked for a charge in dollars, it
+declined, because nothing said what currency it was holding. Asked for a
+status summary and a command together, it refused the command:
+
+> almost none of these numbers can be safely interpreted, because not one of
+> them carries a declared unit
+
+Correct, and useless. The JSON Structure run answered all three.
+
 So look at what a typical MCP tool schema says today:
 
 ```json
@@ -43,17 +76,6 @@ way that comments work as a type system.
 
 JSON Structure puts the meaning in the schema, structured, where both the
 client and the model can get at it.
-
-The gap is measurable. Handed a bare JSON Schema tool surface for a reservoir
-and asked for a shift status, a model came back with this:
-
-> almost none of these numbers can be safely interpreted, because not one of
-> them carries a declared unit
-
-It was right. It also declined to issue the command it had been asked to
-issue. Same model, same data, same tools with the annotations in place: 0.43 m
-over the spillway crest, data flagged provisional, command sent. Ten scored
-scenarios are at the end of this piece.
 
 ## Four things JSON Structure adds
 
@@ -219,6 +241,86 @@ For a single tool this is a nicety. For an agent loop running twenty tools
 across four servers, it is the difference between a call graph and a pile of
 functions.
 
+## The description you would have to write instead
+
+The obvious objection is that a description string carries the same facts. It
+does, and the honest thing is to say so, because that got tested.
+
+A navigation receiver reports a position, a velocity, and a field gradient.
+
+```json
+{
+  "name": "NavigationFix",
+  "type": "object",
+  "coordinateReferenceSystem": {
+    "reference": "http://www.opengis.net/def/crs/EPSG/0/4979",
+    "kind": "ogc-crs",
+    "coordinates": ["lat", "lon", "height"]
+  },
+  "vectorReferenceFrames": [
+    {
+      "reference": "http://www.opengis.net/def/crs/EPSG/0/4978",
+      "kind": "ogc-crs",
+      "components": ["vel_x", "vel_y", "vel_z"]
+    },
+    {
+      "reference": "http://www.opengis.net/def/crs/EPSG/0/4978",
+      "kind": "ogc-crs",
+      "components": ["grad_x", "grad_y", "grad_z"],
+      "variance": "covariant"
+    }
+  ],
+  "properties": {
+    "lat":    { "type": "double", "unit": "deg" },
+    "lon":    { "type": "double", "unit": "deg" },
+    "height": { "type": "double", "unit": "m" },
+    "vel_x":  { "type": "double", "unit": "m/s" },
+    "vel_y":  { "type": "double", "unit": "m/s" },
+    "vel_z":  { "type": "double", "unit": "m/s" },
+    "grad_x": { "type": "double", "unit": "nT/m" },
+    "grad_y": { "type": "double", "unit": "nT/m" },
+    "grad_z": { "type": "double", "unit": "nT/m" }
+  }
+}
+```
+
+Nine numbers in three groups, and the groups do not behave alike. The position
+sits in EPSG:4979, two angles and a height. The velocity is resolved on the
+axes of EPSG:4978, a different system with a different shape. The gradient
+sits in the same frame as the velocity and still transforms by a different
+rule, because it is a covector.
+
+The same nine properties were then written as JSON Schema, with descriptions
+carrying every one of those facts in prose: the systems named, the grouping
+stated, the order stated, and the transformation behaviour spelled out. The
+question put to both was whether a seven-parameter Helmert transformation
+applies its translation to each triple, and whether the scale enters as s or
+as 1/s.
+
+Both answered correctly. So did a much weaker model, on both schemas, and on a
+prose variant that never mentioned covariance at all. Prose is not worse at
+conveying the fact to a model, and this piece is not going to pretend it is.
+
+What prose cannot do is everything else.
+
+The fact belongs to no single property. It is about `lat`, `lon` and `height`
+jointly and in that order, and about `vel_x`, `vel_y` and `vel_z` jointly and
+in that order. JSON Schema has nowhere to attach a fact about an ordered set
+of properties, so the author writes it into nine description strings and hopes
+the nine copies agree. Rename one property and several of them are quietly
+lying. Nothing checks that. The `components` array is one place, and it cannot
+disagree with itself.
+
+`"variance": "covariant"` has a value space of two. A validator can reject a
+third value, a client can branch on it, a code generator can emit a different
+transform for it. "The components of this gradient transform covariantly under
+a change of frame" is a sentence, and the only thing in the stack that can act
+on a sentence is the model.
+
+So the argument is not that the model cannot work it out. Often it can. The
+argument is that the fact should be available to the client, the validator and
+the generator as well, and that it should survive a rename.
+
 ## What you actually get
 
 Fewer retry turns, because the model has the facts up front instead of
@@ -273,31 +375,13 @@ name the same vocabulary differently and nothing will catch it.
 
 ## Where to start
 
-There is a runnable A/B server in [`src/`](src/README.md): one fictional water
-operations system, served once as JSON Schema and once as JSON Structure, with
-identical tool names, identical description strings, and identical data. Same
-model on both sides, ten scenarios, and the schema as the only variable.
-
-Asked to cut a release to 60 cubic feet per second, the baseline sent `60`. The
-server takes cubic metres per second, so that is 35 times the intended flow,
-and it lands inside the permitted range, so it is accepted without error. The
-model's stated reasoning: it had "assumed the server interprets it in cubic
-feet per second". Put `unit` and `ucumUnit` on that one argument, change
-nothing else, and it converts to 1.699 and cites the annotation as the reason.
-
-The rest fail differently, and the difference is the interesting part. Asked
-whether the forebay is over the spillway crest, the baseline reaches the right
-number but at low confidence, warning that the answer flips if `level` turns
-out to be in other units. Asked for a billing figure in dollars, it refuses
-outright, because nothing tells it what currency the number is in. Asked for a
-shift status and a setpoint together, it produces the refusal at the top of
-this piece and calls the spill state "unclear". It is not wrong. It is
-useless.
-
-Eight wins, two ties, no losses. The two ties are the scenarios where the
-baseline was already fine: an unfamiliar identifier shape, which it looked up
-rather than guessed at, and a call that takes no arguments. So an agent on a
-bare schema does one of three things: it hedges, it refuses, or it commits.
+The A/B server behind the numbers at the top of this piece is in
+[`src/`](src/README.md): one fictional water operations system, served once as
+JSON Schema and once as JSON Structure, with identical tool names, identical
+description strings, and identical data. The two ties are the scenarios where
+the baseline was already fine, an unfamiliar identifier shape that it looked
+up rather than guessed at, and a call that takes no arguments. So an agent on
+a bare schema does one of three things: it hedges, it refuses, or it commits.
 Two of those waste your afternoon. The third one moves water.
 
 Pick one tool. Preferably one with a unit, a currency, or an identifier that

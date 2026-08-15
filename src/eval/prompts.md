@@ -253,6 +253,43 @@ that `qualityCode` 3 "is uninterpretable without a code list". Both objections
 are correct. `unit`, `coordinateReferenceSystem`, and `codedValues` answer all
 three.
 
+## Side test: annotation versus a description that tries
+
+A separate test, not part of the ten, run to check the claim that a semantic
+annotation beats a well-written description string on model comprehension.
+
+Record: nine properties. `lat`/`lon`/`height` a position in EPSG:4979,
+`vel_x`/`vel_y`/`vel_z` a velocity in EPSG:4978, `grad_x`/`grad_y`/`grad_z` a
+field gradient in EPSG:4978 and covariant.
+
+Question: under a seven-parameter Helmert transformation with a non-unit scale
+factor, does the translation apply to each triple, and does the scale enter as
+`s` or `1/s`? Correct: position yes/`s`, velocity no/`s`, gradient no/`1/s`.
+A non-unit scale is required, because under a pure rotation the inverse
+transpose equals the rotation and the covariant and contravariant cases become
+indistinguishable.
+
+| Arm | Schema | Result |
+|---|---|---|
+| A1 | JSON Schema, careful descriptions, covariance never mentioned | correct |
+| A2 | A1 plus explicit "transforms covariantly" prose | correct |
+| B | JSON Structure with `vectorReferenceFrames` and `variance` | correct |
+
+Run twice, on a strong model and on a weak one. Six runs, six correct answers,
+all at high confidence.
+
+**The claim is not supported.** The annotation does not beat a good description
+on comprehension, and A1 shows the fact does not even need stating: `nT/m`
+makes the inverse-length dependence a matter of dimensional analysis, so the
+model derives covariance from the unit rather than reading it anywhere.
+
+The example was badly chosen for the purpose. Any fact derivable from units and
+names will tie, and a diligent author writing prose will tie on the rest. The
+surviving argument is not comprehension but formality: a value space a
+validator can check, one binding site instead of nine copies that can drift
+apart under a rename, and a field a client or code generator can branch on
+without a language model in the loop.
+
 ## Fairness
 
 The two modes serve identical tool names, identical description strings, and
